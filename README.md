@@ -16,3 +16,4 @@
 3.	Заполнить список лог-файлов для захвата.
 
 ![image](https://user-images.githubusercontent.com/2620711/122016939-931e6100-cdd2-11eb-87e9-e67c4e89afd1.png)
+
