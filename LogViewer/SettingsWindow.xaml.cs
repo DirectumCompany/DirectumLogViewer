@@ -22,13 +22,13 @@ namespace LogViewer
     private static readonly string BackgroundConvertKey = "BackgroundConvert";
     private static readonly List<string> DefaultListLogs = new List<string>
     {
-      "WebServer",
-      "Worker",
-      "WorkflowBlockService",
-      "WorkflowProcessService",
-      "IntegrationService",
-      "StorageService",
-      "WcfServer"
+      "${machinename}.WebServer.${shortdate}",
+      "${machinename}.Worker.${shortdate}",
+      "${machinename}.WorkflowBlockService.${shortdate}",
+      "${machinename}.WorkflowProcessService.${shortdate}",
+      "${machinename}.IntegrationService.${shortdate}",
+      "${machinename}.StorageService.${shortdate}",
+      "${machinename}.WcfServer.${shortdate}"
     };
 
     public SettingsWindow()

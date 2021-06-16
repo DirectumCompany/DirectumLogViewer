@@ -84,16 +84,16 @@ namespace LogViewer
     {
       string[] allfiles = Directory.GetFiles(directory, "*.log", SearchOption.AllDirectories);
 
+      string machineName = System.Environment.MachineName.ToLower();
+      var currentDate = DateTime.Today.ToString("yyyy-MM-dd");
+
       var whiteList = SettingsWindow.WhitelistLogs.Split(new[] { '\r', '\n' })
-        .Select(s => s.Trim().ToLower())
+        .Select(s => s.Trim().ToLower().Replace("${machinename}", machineName).Replace("${shortdate}", currentDate))
         .Where(s => !String.IsNullOrEmpty(s))
         .ToArray();
 
-      var currentDate = DateTime.Today.ToString("yyyy-MM-dd");
-
       return allfiles.Select(f => new LogFile(f))
-        .Where(n => n.Name.Contains(currentDate) && whiteList.Any(w => n.Name.ToLower().Contains(w)) && !n.Name.StartsWith(LogHandler.ConvertedFilePrefix)
-        || whiteList.Contains(System.IO.Path.GetFileNameWithoutExtension(n.Name.ToLower())))
+        .Where(n => whiteList.Contains(System.IO.Path.GetFileNameWithoutExtension(n.Name.ToLower())) && !n.Name.StartsWith(LogHandler.ConvertedFilePrefix))
         .Select(r => r.FullPath)
         .ToArray();
     }

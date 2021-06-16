@@ -15,6 +15,8 @@ namespace LogViewer
 
     public static readonly string LogLevelError = "Error";
 
+    public static readonly int NotificationTextMaxLength = 200;
+
     private readonly string filePath;
     private readonly Uri icon;
     private readonly bool backgroundConvert;
@@ -76,13 +78,15 @@ namespace LogViewer
         {
           try
           {
+            var truncatedMessage = logLine.Message.Substring(0, Math.Min(NotificationTextMaxLength, logLine.Message.Length));
+
             new ToastContentBuilder()
                 .AddArgument(MainWindow.NotificationTypeKey, MainWindow.NotificationError)
                 .AddArgument(MainWindow.NotificationFilePathKey, filePath)
                 .AddArgument(MainWindow.NotificationTimeKey, logLine.Time.Ticks.ToString())
                 .AddAppLogoOverride(icon, ToastGenericAppLogoCrop.Circle)
                 .AddText(fileName)
-                .AddText(logLine.Message)
+                .AddText(truncatedMessage)
                 .Show();
           }
           catch
