@@ -38,17 +38,19 @@ namespace LogViewer
 
     private readonly ObservableCollection<LogLine> logLines = new ObservableCollection<LogLine>();
 
-    private ICollectionView logLinesView;
-
-    private readonly int gridUpdatePeriod = 1000;
-
-    private LogWatcher logWatcher;
-
     private readonly Uri notificationIcon;
 
     private readonly string iconFileName = "horse.png";
 
+    private readonly int gridUpdatePeriod = 1000;
+
+    private ICollectionView logLinesView;
+
+    private LogWatcher logWatcher;
+
     private ScrollViewer gridScrollViewer;
+
+    private string openedFileFullPath;
 
     public MainWindow()
     {
@@ -254,7 +256,9 @@ namespace LogViewer
       }
 
       comboBox.Items.Refresh();
-      OpenLogFile(selectedItem.FullPath);
+
+      openedFileFullPath = selectedItem.FullPath;
+      OpenLogFile(openedFileFullPath);
     }
 
     private ScrollViewer GetScrollViewer(UIElement element)
@@ -305,7 +309,9 @@ namespace LogViewer
     {
       Application.Current.Dispatcher.Invoke(new Action(() =>
       {
-        logLines.Clear();
+        CloseLogFile();
+        if (!string.IsNullOrEmpty(openedFileFullPath))
+          OpenLogFile(openedFileFullPath);
       }));
     }
 
