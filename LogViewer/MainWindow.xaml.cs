@@ -12,6 +12,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
@@ -23,7 +24,6 @@ namespace LogViewer
   /// </summary>
   public partial class MainWindow : Window
   {
-
     public static readonly string NotificationError = "NotificationError";
 
     public static readonly string NotificationTypeKey = "Type";
@@ -38,7 +38,9 @@ namespace LogViewer
 
     private readonly ObservableCollection<LogLine> logLines = new ObservableCollection<LogLine>();
 
-    private readonly int gridUpdatePeriod = 700;
+    private ICollectionView logLinesView;
+
+    private readonly int gridUpdatePeriod = 1000;
 
     private LogWatcher logWatcher;
 
@@ -112,6 +114,9 @@ namespace LogViewer
         LogsFileNames.Items.Add(new LogFile(file));
 
       LogsFileNames.Items.Add(new LogFile(OpenAction, "Open from file..."));
+
+      logLinesView = CollectionViewSource.GetDefaultView(logLines);
+      logLinesView.Filter = null;
     }
 
     private void SetNotificationActivated()
@@ -189,6 +194,9 @@ namespace LogViewer
         Filter.IsEnabled = false;
         LogsGrid.IsEnabled = false;
 
+        FilterLines(string.Empty);
+        Filter.Text = null;
+
         logWatcher = new LogWatcher(fullPath);
         logWatcher.NewLine += OnNewLine;
         logWatcher.FileReCreated += OnFileReCreated;
@@ -207,7 +215,7 @@ namespace LogViewer
         LogsFileNames.IsEnabled = true;
         Filter.IsEnabled = true;
         LogsGrid.IsEnabled = true;
-        Filter.Text = null;
+        GC.Collect();
       }
     }
 
@@ -287,12 +295,6 @@ namespace LogViewer
           }
 
           logLines.Add(logLine);
-
-          if (isEndLine)
-          {
-            if (!string.IsNullOrEmpty(Filter.Text))
-              FilterLines(Filter.Text);
-          }
 
           if (scrollToEnd)
             LogsGrid.ScrollIntoView(logLine);
@@ -382,22 +384,40 @@ namespace LogViewer
       TextBox tb = (TextBox)sender;
       int startLength = tb.Text.Length;
 
-      await Task.Delay(500);
+      await Task.Delay(900);
 
       if (startLength == tb.Text.Length && tb.IsEnabled)
         FilterLines(tb.Text);
+    }
+
+    private bool CheckFilterLine(LogLine line, string text)
+    {
+      if (string.IsNullOrEmpty(text))
+        return true;
+
+      var upperText = text.ToUpper();
+      return (line.Level != null && line.Level.ToUpper().Contains(upperText)) ||
+             (line.FullMessage != null && line.FullMessage.ToUpper().Contains(upperText));
+    }
+
+    private bool LogLinesFilter(object item)
+    {
+      LogLine line = item as LogLine;
+      return CheckFilterLine(line, Filter.Text);
     }
 
     private void FilterLines(string text)
     {
       if (!String.IsNullOrEmpty(text))
       {
-        var upperFilterText = text.ToUpper();
-        LogsGrid.ItemsSource = logLines.Where(l => l.Level.ToUpper().Contains(upperFilterText) || l.FullMessage.ToUpper().Contains(upperFilterText));
+        if (logLinesView.Filter == null)
+          logLinesView.Filter = LogLinesFilter;
+        else
+          logLinesView.Refresh();
       }
       else
       {
-        LogsGrid.ItemsSource = logLines;
+        logLinesView.Filter = null;
 
         if (LogsGrid.SelectedItem != null)
           LogsGrid.ScrollIntoView(LogsGrid.SelectedItem);
