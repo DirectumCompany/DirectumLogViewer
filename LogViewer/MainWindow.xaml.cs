@@ -441,5 +441,16 @@ namespace LogViewer
       }
       Clipboard.SetText(sb.ToString());
     }
+
+    private void SearchText(Object sender, ExecutedRoutedEventArgs e)
+    {
+      var dialog = new SearchWindow();
+      var result = dialog.ShowDialog();
+
+      if (result == true)
+      {
+        MessageBox.Show(dialog.SearchText.Text);
+      }      
+    }
   }
 }
