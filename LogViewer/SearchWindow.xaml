@@ -1,0 +1,25 @@
+﻿<Window x:Class="LogViewer.SearchWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:LogViewer"
+        mc:Ignorable="d"
+        Title="Search text" Height="auto" Width="auto"
+        SizeToContent="WidthAndHeight" ResizeMode="NoResize" ShowInTaskbar="False" WindowStartupLocation="CenterOwner"
+        FocusManager.FocusedElement="{Binding ElementName=SearchText}">
+  <Grid Margin="10">
+    <Grid.RowDefinitions>
+      <RowDefinition Height="25" />
+      <RowDefinition Height="*" />
+    </Grid.RowDefinitions>
+
+    <TextBox Grid.Row="0" Name="SearchText" HorizontalAlignment="Stretch" Margin="0,0,0,0" Height="25" Width ="300"  FontSize="14" FontStyle="Normal" KeyDown="SearchText_KeyDown"/>
+
+   
+    <WrapPanel Grid.Row="1" HorizontalAlignment="Right" Margin="0,0,0,0" VerticalAlignment="Bottom">
+      <Button  IsDefault="False" Click="Accept_Click" MinWidth="60" Margin="0,10,0,0">OK</Button>
+    </WrapPanel>
+
+  </Grid>
+</Window>
