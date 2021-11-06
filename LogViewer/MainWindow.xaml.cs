@@ -183,6 +183,7 @@ namespace LogViewer
       }
 
       LogsGrid.ItemsSource = null;
+      SearchGrid.ItemsSource = null;
       logLines.Clear();
       GC.Collect();
     }
@@ -449,8 +450,20 @@ namespace LogViewer
 
       if (result == true)
       {
-        MessageBox.Show(dialog.SearchText.Text);
-      }      
+        SearchGrid.ItemsSource = logLines.Where(l => CheckFilterLine(l, dialog.SearchText.Text)).ToList();
+        BottomTabControl.SelectedItem = SearchTab;
+      }
+    }
+
+    private void SearchGrid_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+      LogLine line = (sender as DataGrid).SelectedItem as LogLine;
+
+      if (line != null)
+      {
+        LogsGrid.SelectedItem = line;
+        LogsGrid.ScrollIntoView(line);
+      }
     }
   }
 }
