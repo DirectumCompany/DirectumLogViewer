@@ -5,6 +5,10 @@
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <UseWPF>true</UseWPF>
     <ApplicationIcon>Resources\horse_icon.ico</ApplicationIcon>
+    <Version>1.0.1</Version>
+    <Company>Directum</Company>
+    <Product>Directum Log Viewer</Product>
+    <Authors>Directum</Authors>
   </PropertyGroup>
 
   <ItemGroup>

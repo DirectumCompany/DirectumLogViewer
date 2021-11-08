@@ -445,6 +445,9 @@ namespace LogViewer
 
     private void SearchText(Object sender, ExecutedRoutedEventArgs e)
     {
+      if (!LogsFileNames.IsEnabled)
+        return;
+
       var dialog = new SearchWindow();
       var result = dialog.ShowDialog();
 
