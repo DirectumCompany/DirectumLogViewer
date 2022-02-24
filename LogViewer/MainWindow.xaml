@@ -130,6 +130,9 @@
         <DataGridTextColumn Header="Level" Binding="{Binding Path=Level}" Width="50" IsReadOnly="True" CanUserSort="False"/>
         <DataGridTextColumn Header="Logger" Binding="{Binding Path=Logger}" Width="110" IsReadOnly="True" CanUserSort="False"/>
         <DataGridTextColumn Header="Message" Binding="{Binding Path=Message}" Width="*" IsReadOnly="True" CanUserSort="False"/>
+        <DataGridTextColumn Header="Pid" Binding="{Binding Path=Pid}" Width="100" IsReadOnly="True" CanUserSort="False" Visibility="Collapsed"/>
+        <DataGridTextColumn Header="Trace" Binding="{Binding Path=Trace}" Width="100" IsReadOnly="True" CanUserSort="False" Visibility="Collapsed"/>
+        <DataGridTextColumn Header="Tenant" Binding="{Binding Path=Tenant}" Width="100" IsReadOnly="True" CanUserSort="False" Visibility="Collapsed"/>
       </DataGrid.Columns>
 
       <DataGrid.Resources>
