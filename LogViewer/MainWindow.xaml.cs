@@ -34,6 +34,8 @@ namespace LogViewer
 
     private readonly string OpenAction = "OpenAction";
 
+    private readonly string All = "All";
+
     private readonly List<LogHandler> LogHandlers = new List<LogHandler>();
 
     private readonly ObservableCollection<LogLine> logLines = new ObservableCollection<LogLine>();
@@ -52,6 +54,9 @@ namespace LogViewer
 
     private string openedFileFullPath;
 
+    private bool filterChanged = false;
+
+    private List<string> HiddenColumns = new List<string> { "Pid", "Trace", "Tenant" };
     public MainWindow()
     {
       InitializeComponent();
@@ -116,9 +121,25 @@ namespace LogViewer
         LogsFileNames.Items.Add(new LogFile(file));
 
       LogsFileNames.Items.Add(new LogFile(OpenAction, "Open from file..."));
+      
+      InitTenantFilter();
+      InitLevelFilter();
 
       logLinesView = CollectionViewSource.GetDefaultView(logLines);
       logLinesView.Filter = null;
+    }
+
+    private void InitTenantFilter()
+    {
+      TenantFilter.Items.Clear();
+      TenantFilter.Items.Add(All);
+      TenantFilter.SelectedValue = All;
+    }
+    private void InitLevelFilter()
+    {
+      LevelFilter.Items.Clear();
+      LevelFilter.Items.Add(All);
+      LevelFilter.SelectedValue = All;
     }
 
     private void SetNotificationActivated()
@@ -162,6 +183,7 @@ namespace LogViewer
               BringToForeground();
               if (!string.IsNullOrEmpty(Filter.Text))
               {
+                filterChanged = true;
                 FilterLines(string.Empty);
                 Filter.Text = null;
               }
@@ -185,6 +207,7 @@ namespace LogViewer
       LogsGrid.ItemsSource = null;
       SearchGrid.ItemsSource = null;
       logLines.Clear();
+      InitTenantFilter();
       GC.Collect();
     }
 
@@ -197,6 +220,7 @@ namespace LogViewer
         Filter.IsEnabled = false;
         LogsGrid.IsEnabled = false;
 
+        filterChanged = true;
         FilterLines(string.Empty);
         Filter.Text = null;
 
@@ -207,6 +231,20 @@ namespace LogViewer
         LogsGrid.ItemsSource = logLines;
         gridScrollViewer = GetScrollViewer(LogsGrid);
         logWatcher.StartWatch(gridUpdatePeriod);
+
+        var tenants = logLines.Where(l => !string.IsNullOrEmpty(l.Tenant)).Select(l => l.Tenant).Distinct();
+
+        foreach (var tenant in tenants)
+        {
+          TenantFilter.Items.Add(tenant);
+        }
+
+        var levels = logLines.Where(l => !string.IsNullOrEmpty(l.Level)).Select(l => l.Level).Distinct();
+
+        foreach (var level in levels)
+        {
+          LevelFilter.Items.Add(level);
+        }
       }
       catch (Exception e)
       {
@@ -390,6 +428,7 @@ namespace LogViewer
     {
       TextBox tb = (TextBox)sender;
       int startLength = tb.Text.Length;
+      filterChanged = true;
 
       await Task.Delay(900);
 
@@ -397,37 +436,63 @@ namespace LogViewer
         FilterLines(tb.Text);
     }
 
-    private bool CheckFilterLine(LogLine line, string text)
+    private bool GetFilterLine(LogLine line, string text)
     {
-      if (string.IsNullOrEmpty(text))
-        return true;
+      var result = true;
 
-      var upperText = text.ToUpper();
-      return (line.Level != null && line.Level.ToUpper().Contains(upperText)) ||
-             (line.FullMessage != null && line.FullMessage.ToUpper().Contains(upperText));
+      if (!string.IsNullOrEmpty(text))
+      {
+
+        var upperText = text.ToUpper();
+        result = line.FullMessage != null && line.FullMessage.ToUpper().Contains(upperText);
+      }
+
+      var tenantFilter = TenantFilter.SelectedValue as string;
+
+      if (!string.IsNullOrEmpty(tenantFilter) && !string.Equals(tenantFilter, All))
+      {
+        result = result && string.Equals(line.Tenant, tenantFilter);
+      }
+
+      var levelFilter = LevelFilter.SelectedValue as string;
+
+      if (!string.IsNullOrEmpty(levelFilter) && !string.Equals(levelFilter, All))
+      {
+        result = result && line.Level != null && string.Equals(line.Level, levelFilter);
+      }
+
+      return result;
     }
 
     private bool LogLinesFilter(object item)
     {
       LogLine line = item as LogLine;
-      return CheckFilterLine(line, Filter.Text);
+      return GetFilterLine(line, Filter.Text);
     }
 
     private void FilterLines(string text)
     {
-      if (!String.IsNullOrEmpty(text))
-      {
-        if (logLinesView.Filter == null)
-          logLinesView.Filter = LogLinesFilter;
-        else
-          logLinesView.Refresh();
-      }
-      else
+      if (logLinesView == null)
+        return;
+
+      if(filterChanged)
       {
         logLinesView.Filter = null;
 
         if (LogsGrid.SelectedItem != null)
           LogsGrid.ScrollIntoView(LogsGrid.SelectedItem);
+      }
+
+      var tenantFilter = TenantFilter.SelectedValue as string;
+      var levelFilter = LevelFilter.SelectedValue as string;
+
+      if (!String.IsNullOrEmpty(text) || (!String.Equals(tenantFilter, All) && !String.IsNullOrEmpty(tenantFilter))
+        || (!String.Equals(levelFilter, All) && !String.IsNullOrEmpty(levelFilter)))
+      {
+        if (logLinesView.Filter == null)
+          logLinesView.Filter = LogLinesFilter;
+        else
+          logLinesView.Refresh();
       }
     }
 
@@ -453,7 +518,7 @@ namespace LogViewer
 
       if (result == true)
       {
-        SearchGrid.ItemsSource = logLines.Where(l => CheckFilterLine(l, dialog.SearchText.Text)).ToList();
+        SearchGrid.ItemsSource = logLines.Where(l => GetFilterLine(l, dialog.SearchText.Text)).ToList();
         BottomTabControl.SelectedItem = SearchTab;
       }
     }
@@ -466,6 +531,42 @@ namespace LogViewer
       {
         LogsGrid.SelectedItem = line;
         LogsGrid.ScrollIntoView(line);
+      }
+    }
+    private void FilterTenant_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+      var tenant = (sender as ComboBox).SelectedItem as string;
+
+      if (tenant != null)
+      {
+        filterChanged = true;
+        FilterLines(Filter.Text);
+      }
+    }
+
+    private void FilterLevel_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+      var level = (sender as ComboBox).SelectedItem as string;
+
+      if (level != null)
+      {
+        filterChanged = true;
+        FilterLines(Filter.Text);
+      }
+    }
+    private void ColumnVisibilityCheck(object sender, RoutedEventArgs e)
+    {
+      foreach (var hiddenColumns in LogsGrid.Columns.Where(c => HiddenColumns.Contains(c.Header)))
+      {
+        hiddenColumns.Visibility = Visibility.Visible;
+      }
+    }
+
+    private void ColumnVisibilityUnchecked(object sender, RoutedEventArgs e)
+    {
+      foreach (var hiddenColumns in LogsGrid.Columns.Where(c => HiddenColumns.Contains(c.Header)))
+      {
+        hiddenColumns.Visibility = Visibility.Collapsed;
       }
     }
   }
