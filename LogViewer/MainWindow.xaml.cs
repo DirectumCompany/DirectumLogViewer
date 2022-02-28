@@ -208,6 +208,7 @@ namespace LogViewer
       SearchGrid.ItemsSource = null;
       logLines.Clear();
       InitTenantFilter();
+      InitLevelFilter();
       GC.Collect();
     }
 
@@ -219,6 +220,9 @@ namespace LogViewer
         LogsFileNames.IsEnabled = false;
         Filter.IsEnabled = false;
         LogsGrid.IsEnabled = false;
+        ColumnVisibilityToggleBtn.IsEnabled = false;
+        TenantFilter.IsEnabled = false;
+        LevelFilter.IsEnabled = false;
 
         logWatcher = new LogWatcher(fullPath);
         logWatcher.NewLine += OnNewLine;
@@ -253,6 +257,9 @@ namespace LogViewer
         LogsFileNames.IsEnabled = true;
         Filter.IsEnabled = true;
         LogsGrid.IsEnabled = true;
+        ColumnVisibilityToggleBtn.IsEnabled = true;
+        TenantFilter.IsEnabled = true;
+        LevelFilter.IsEnabled = true;
         GC.Collect();
       }
     }

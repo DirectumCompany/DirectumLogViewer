@@ -100,7 +100,7 @@
                 <ColumnDefinition Width="auto"/>
             </Grid.ColumnDefinitions>
 
-            <ToggleButton Grid.Column="0" Width="25" Height="25" Margin="0,0,0,0" Checked = "ColumnVisibilityCheck" Unchecked = "ColumnVisibilityUnchecked" HorizontalAlignment="Right">
+            <ToggleButton x:Name="ColumnVisibilityToggleBtn" Grid.Column="0" Width="25" Height="25" Margin="0,0,0,0" Checked = "ColumnVisibilityCheck" Unchecked = "ColumnVisibilityUnchecked" HorizontalAlignment="Right">
                 <ToggleButton.Style>
                     <Style TargetType="{x:Type ToggleButton}">
                         <Style.Triggers>
