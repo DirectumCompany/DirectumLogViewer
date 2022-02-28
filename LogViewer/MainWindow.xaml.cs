@@ -456,7 +456,8 @@ namespace LogViewer
         var upperText = text.ToUpper();
         result = (line.FullMessage != null && line.FullMessage.ToUpper().Contains(upperText))
           || (line.Trace != null && line.Trace.ToUpper().Contains(upperText))
-          || (line.Pid != null && line.Pid.ToUpper().Contains(upperText));
+          || (line.Pid != null && line.Pid.ToUpper().Contains(upperText))
+          || (line.Level != null && line.Level.ToUpper().Contains(upperText));
       }
 
       var tenantFilter = TenantFilter.SelectedValue as string;
