@@ -96,20 +96,15 @@
                 <ColumnDefinition Width="auto" />
                 <ColumnDefinition Width="auto" />
                 <ColumnDefinition Width="auto" />
-                <ColumnDefinition />
+                <ColumnDefinition Width="auto"/>
+                <ColumnDefinition Width="auto"/>
             </Grid.ColumnDefinitions>
 
-            <Label  Grid.Column="0"  Content="Tenant" FontStyle="Normal" FontSize="14" VerticalAlignment="Center" Margin="0,0,0,0"/>
-            <ComboBox x:Name="TenantFilter" Grid.Column="1" HorizontalAlignment="Left"  VerticalAlignment="Center" FontStyle="Normal" Width="150" Height="25" Margin="0,0,0,0" FontSize="14" SelectionChanged="FilterTenant_SelectionChanged"/>
-
-            <Label  Grid.Column="2"  Content="Level" FontStyle="Normal" FontSize="14" VerticalAlignment="Center" Margin="5,0,0,0"/>
-            <ComboBox x:Name="LevelFilter" Grid.Column="3" HorizontalAlignment="Left"  VerticalAlignment="Center" FontStyle="Normal" Width="150" Height="25" Margin="0,0,0,0" FontSize="14" SelectionChanged="FilterLevel_SelectionChanged"/>
-            
-            <ToggleButton Grid.Column="4" Width="25" Height="25" Margin="5,0,0,0" Checked = "ColumnVisibilityCheck" Unchecked = "ColumnVisibilityUnchecked" HorizontalAlignment="Right">
+            <ToggleButton Grid.Column="0" Width="25" Height="25" Margin="0,0,0,0" Checked = "ColumnVisibilityCheck" Unchecked = "ColumnVisibilityUnchecked" HorizontalAlignment="Right">
                 <ToggleButton.Style>
                     <Style TargetType="{x:Type ToggleButton}">
                         <Style.Triggers>
-                            
+
                             <Trigger Property="IsChecked" Value="true">
                                 <Setter Property="Content" Value ="{StaticResource VisibilityImage}" />
                             </Trigger>
@@ -121,9 +116,15 @@
                 </ToggleButton.Style>
             </ToggleButton>
 
+            <Label  Grid.Column="1"  Content="Tenant" FontStyle="Normal" FontSize="14" VerticalAlignment="Center" Margin="5,0,0,0"/>
+            <ComboBox x:Name="TenantFilter" Grid.Column="2" HorizontalAlignment="Left"  VerticalAlignment="Center" FontStyle="Normal" Width="150" Height="25" Margin="0,0,0,0" FontSize="14" SelectionChanged="FilterTenant_SelectionChanged"/>
+
+            <Label  Grid.Column="3"  Content="Level" FontStyle="Normal" FontSize="14" VerticalAlignment="Center" Margin="5,0,0,0"/>
+            <ComboBox x:Name="LevelFilter" Grid.Column="4" HorizontalAlignment="Left"  VerticalAlignment="Center" FontStyle="Normal" Width="150" Height="25" Margin="0,0,0,0" FontSize="14" SelectionChanged="FilterLevel_SelectionChanged"/>
+
         </Grid>
 
-        <DataGrid x:Name="LogsGrid" Grid.Row="2" AutoGenerateColumns="False" HorizontalGridLinesBrush="#FFC7C7C7" GridLinesVisibility="Horizontal" Margin="0,0,0,0" SelectionMode="Extended" RowHeight="20" SelectionChanged="LogsGrid_SelectionChanged" CanUserAddRows="false" > 
+        <DataGrid x:Name="LogsGrid" Grid.Row="2" AutoGenerateColumns="False" HorizontalGridLinesBrush="#FFC7C7C7" GridLinesVisibility="Horizontal" Margin="0,0,0,0" SelectionMode="Extended" RowHeight="20" SelectionChanged="LogsGrid_SelectionChanged" CanUserAddRows="false" >
 
             <DataGrid.CellStyle>
                 <Style TargetType="{x:Type DataGridCell}">
@@ -161,14 +162,16 @@
                 <KeyBinding Key="C" Modifiers="Control" Command="Copy" />
             </DataGrid.InputBindings>
 
+            
             <DataGrid.Columns>
                 <DataGridTextColumn Header="Time" Binding="{Binding Path=Time, StringFormat='yyyy-MM-dd HH:mm:ss.fff'}" Width="145" IsReadOnly="True" CanUserSort="False"/>
+                <DataGridTextColumn Header="Tenant" Binding="{Binding Path=Tenant}" Width="100" IsReadOnly="True" CanUserSort="False" Visibility="Collapsed"/>
+                <DataGridTextColumn Header="Pid" Binding="{Binding Path=Pid}" Width="80" IsReadOnly="True" CanUserSort="False" Visibility="Collapsed"/>
+                <DataGridTextColumn Header="Trace" Binding="{Binding Path=Trace}" Width="150" IsReadOnly="True" CanUserSort="False" Visibility="Collapsed"/>
                 <DataGridTextColumn Header="Level" Binding="{Binding Path=Level}" Width="50" IsReadOnly="True" CanUserSort="False"/>
                 <DataGridTextColumn Header="Logger" Binding="{Binding Path=Logger}" Width="110" IsReadOnly="True" CanUserSort="False"/>
-                <DataGridTextColumn Header="Message" Binding="{Binding Path=Message}" Width="*" IsReadOnly="True" CanUserSort="False" />
-                <DataGridTextColumn Header="Pid" Binding="{Binding Path=Pid}" Width="100" IsReadOnly="True" CanUserSort="False" Visibility="Collapsed"/>
-                <DataGridTextColumn Header="Trace" Binding="{Binding Path=Trace}" Width="100" IsReadOnly="True" CanUserSort="False" Visibility="Collapsed"/>
-                <DataGridTextColumn Header="Tenant" Binding="{Binding Path=Tenant}" Width="100" IsReadOnly="True" CanUserSort="False" Visibility="Collapsed"/>
+                <DataGridTextColumn Header="Message" Binding="{Binding Path=Message}" Width="auto" IsReadOnly="True" CanUserSort="False" ScrollViewer.HorizontalScrollBarVisibility="Visible"/>
+               
             </DataGrid.Columns>
 
             <DataGrid.Resources>
@@ -179,7 +182,6 @@
                    Color="#FFC9CBCD"/>
             </DataGrid.Resources>
         </DataGrid>
-
 
         <GridSplitter Grid.Row="3" Grid.ColumnSpan="3" Height="5"
         HorizontalAlignment="Stretch" VerticalAlignment="Center" />

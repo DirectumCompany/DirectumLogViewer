@@ -220,16 +220,13 @@ namespace LogViewer
         Filter.IsEnabled = false;
         LogsGrid.IsEnabled = false;
 
-        filterChanged = true;
-        FilterLines(string.Empty);
-        Filter.Text = null;
-
         logWatcher = new LogWatcher(fullPath);
         logWatcher.NewLine += OnNewLine;
         logWatcher.FileReCreated += OnFileReCreated;
         logWatcher.ReadToEndLine();
         LogsGrid.ItemsSource = logLines;
         gridScrollViewer = GetScrollViewer(LogsGrid);
+        gridScrollViewer.ScrollToEnd();
         logWatcher.StartWatch(gridUpdatePeriod);
 
         var tenants = logLines.Where(l => !string.IsNullOrEmpty(l.Tenant)).Select(l => l.Tenant).Distinct();
@@ -370,6 +367,12 @@ namespace LogViewer
         if (!String.IsNullOrEmpty(line.Tenant))
           DetailText.Text += $"Tenant: {line.Tenant} \n";
 
+        if (!String.IsNullOrEmpty(line.Pid))
+          DetailText.Text += $"Pid: {line.Pid} \n";
+
+        if (!String.IsNullOrEmpty(line.Trace))
+          DetailText.Text += $"Trace: {line.Trace} \n";
+
         if (!String.IsNullOrEmpty(line.Version))
           DetailText.Text += $"Version: {line.Version} \n";
 
@@ -444,7 +447,9 @@ namespace LogViewer
       {
 
         var upperText = text.ToUpper();
-        result = line.FullMessage != null && line.FullMessage.ToUpper().Contains(upperText);
+        result = (line.FullMessage != null && line.FullMessage.ToUpper().Contains(upperText))
+          || (line.Trace != null && line.Trace.ToUpper().Contains(upperText))
+          || (line.Pid != null && line.Pid.ToUpper().Contains(upperText));
       }
 
       var tenantFilter = TenantFilter.SelectedValue as string;
