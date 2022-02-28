@@ -446,7 +446,7 @@ namespace LogViewer
         FilterLines(tb.Text);
     }
 
-    private bool GetFilterLine(LogLine line, string text)
+    private bool NeedShowLine(LogLine line, string text)
     {
       var result = true;
 
@@ -480,7 +480,7 @@ namespace LogViewer
     private bool LogLinesFilter(object item)
     {
       LogLine line = item as LogLine;
-      return GetFilterLine(line, Filter.Text);
+      return NeedShowLine(line, Filter.Text);
     }
 
     private void FilterLines(string text)
@@ -531,7 +531,7 @@ namespace LogViewer
 
       if (result == true)
       {
-        SearchGrid.ItemsSource = logLines.Where(l => GetFilterLine(l, dialog.SearchText.Text)).ToList();
+        SearchGrid.ItemsSource = logLines.Where(l => NeedShowLine(l, dialog.SearchText.Text)).ToList();
         BottomTabControl.SelectedItem = SearchTab;
       }
     }
