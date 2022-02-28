@@ -23,7 +23,8 @@ namespace LogReader
     {
       {"pid", 10},
       {"l", 5},
-      {"lg", 30}
+      {"lg", 30},
+      {"tr", 20}
     };
 
     /// <summary>
@@ -49,7 +50,16 @@ namespace LogReader
         var parsedLine = ParseLogLine(jsonLine);
 
         if (parsedLine.ContainsKey("pid"))
+        {
+          log.Pid = parsedLine["pid"];
           parsedLine.Remove("pid");
+        }
+
+        if (parsedLine.ContainsKey("tr"))
+        {
+          log.Trace = parsedLine["tr"];
+          parsedLine.Remove("tr");
+        }
 
         if (parsedLine.ContainsKey("t"))
         {
@@ -116,6 +126,12 @@ namespace LogReader
 
       if (!string.IsNullOrEmpty(logLine.UserName))
         result.Add("un", logLine.UserName);
+
+      if (!string.IsNullOrEmpty(logLine.Pid))
+        result.Add("pid", logLine.Pid);
+
+      if (!string.IsNullOrEmpty(logLine.Trace))
+        result.Add("tr", logLine.Trace);
 
       return result;
     }

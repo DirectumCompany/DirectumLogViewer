@@ -8,225 +8,266 @@
         mc:Ignorable="d"
         Title="Directum Log Viewer" Height="650" Width="1024" SizeToContent="Manual" WindowStartupLocation="CenterScreen" WindowState="Maximized">
 
-  <Window.Resources>
-    <Style x:Key="placeHolder" TargetType="{x:Type TextBox}" BasedOn="{StaticResource {x:Type TextBox}}">
-      <Setter Property="Template">
-        <Setter.Value>
-          <ControlTemplate TargetType="{x:Type TextBox}">
-            <Grid>
-              <TextBox Text="{Binding Path=Text,
+    <Window.Resources>
+        <Style x:Key="placeHolder" TargetType="{x:Type TextBox}" BasedOn="{StaticResource {x:Type TextBox}}">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type TextBox}">
+                        <Grid>
+                            <TextBox Text="{Binding Path=Text,
                                                 RelativeSource={RelativeSource TemplatedParent}, 
                                                 Mode=TwoWay,
                                                 UpdateSourceTrigger=PropertyChanged}"
                                  x:Name="textSource" 
                                  Background="Transparent" 
                                  Panel.ZIndex="2" />
-              <TextBox Text="{TemplateBinding Tag}" Background="{TemplateBinding Background}" Panel.ZIndex="1">
-                <TextBox.Style>
-                  <Style TargetType="{x:Type TextBox}">
-                    <Setter Property="Foreground" Value="Transparent"/>
-                    <Style.Triggers>
-                      <DataTrigger Binding="{Binding Path=Text, Source={x:Reference textSource}}" Value="">
-                        <Setter Property="Foreground" Value="LightGray"/>
-                        <Setter Property="FontStyle" Value="Italic"/>
-                      </DataTrigger>
-                    </Style.Triggers>
-                  </Style>
-                </TextBox.Style>
-              </TextBox>
-            </Grid>
-          </ControlTemplate>
-        </Setter.Value>
-      </Setter>
-    </Style>
-
-    <RoutedUICommand x:Key="SearchTextCommand" Text="Search text"  />
-  </Window.Resources>
-
-  <Window.CommandBindings>
-    <CommandBinding  Command="{StaticResource SearchTextCommand}" Executed="SearchText"  />
-  </Window.CommandBindings>
-
-  <Window.InputBindings>
-    <KeyBinding Key="F" Modifiers="Ctrl" Command="{StaticResource SearchTextCommand}" />
-  </Window.InputBindings>
-
-  <Grid Margin="10">
-    <Grid.RowDefinitions>
-      <RowDefinition Height="32" />
-      <RowDefinition Height="*" />
-      <RowDefinition Height="auto" />
-      <RowDefinition Height="250" />
-    </Grid.RowDefinitions>
-
-    <ProgressBar x:Name="LoadBar" Grid.Row="0" Minimum="0" Maximum="100" Value="0" Height="5" Margin="0,-5,0,0" VerticalAlignment="Top" Panel.ZIndex="1" HorizontalAlignment="Stretch" Visibility="Hidden"/>
-
-    <Grid Grid.Row="0" VerticalAlignment="Top" Margin="0,2,0,0" >
-      <Grid.ColumnDefinitions>
-        <ColumnDefinition Width="auto" />
-        <ColumnDefinition Width="*" />
-        <ColumnDefinition Width="auto" />
-        <ColumnDefinition Width="auto" />
-      </Grid.ColumnDefinitions>
-      <ComboBox x:Name="LogsFileNames" Grid.Column="0" ItemsSource="{Binding}" HorizontalAlignment="Left"  VerticalAlignment="Center" Width="305" Height="25" Margin="0,0,0,0" FontSize="14" SelectedItem="{Binding LogFile}" DisplayMemberPath="Name" SelectionChanged="Files_SelectionChanged">
-      </ComboBox>
-
-
-      <TextBox x:Name="Filter" Grid.Column="1" HorizontalAlignment="Stretch" Style="{StaticResource placeHolder}" Tag="Filter.." Text="" TextWrapping="Wrap" VerticalAlignment="Center" Height="25" FontSize="14" FontStyle="Normal" Margin="5,0,0,0" TextChanged="Filter_TextChanged"/>
-
-      <Button Grid.Column="2" Width="25" Height="25" Margin="5,0,0,0" HorizontalAlignment="Right" Command="{StaticResource SearchTextCommand}" >
-        <DockPanel>
-          <Image Source="Resources/find.png"/>
-        </DockPanel>
-      </Button>
-
-      <Button Grid.Column="3" Width="25" Height="25" Margin="5,0,0,0" HorizontalAlignment="Right" Click="Settins_Click" >
-        <DockPanel>
-          <Image Source="Resources/settings.png"/>
-        </DockPanel>
-      </Button>
-    </Grid>
-
-    <DataGrid x:Name="LogsGrid" Grid.Row="1" AutoGenerateColumns="False" HorizontalGridLinesBrush="#FFC7C7C7" GridLinesVisibility="Horizontal" Margin="0,0,0,0" SelectionMode="Extended" RowHeight="20" SelectionChanged="LogsGrid_SelectionChanged" CanUserAddRows="false" >
-
-      <DataGrid.CellStyle>
-        <Style TargetType="{x:Type DataGridCell}">
-          <Style.Triggers>
-            <DataTrigger Binding="{Binding Level}" Value="Error">
-              <Setter Property="Foreground" Value="Red" />
-            </DataTrigger>
-
-            <DataTrigger Binding="{Binding Level}" Value="Debug">
-              <Setter Property="Foreground" Value="Blue" />
-            </DataTrigger>
-
-            <Trigger Property="IsSelected" Value="True">
-              <Setter Property="BorderThickness" Value="0"/>
-            </Trigger>
-
-            <Trigger Property="IsSelected" Value="True">
-              <Setter Property="Foreground" Value="White"/>
-            </Trigger>
-          </Style.Triggers>
+                            <TextBox Text="{TemplateBinding Tag}" Background="{TemplateBinding Background}" Panel.ZIndex="1">
+                                <TextBox.Style>
+                                    <Style TargetType="{x:Type TextBox}">
+                                        <Setter Property="Foreground" Value="Transparent"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Path=Text, Source={x:Reference textSource}}" Value="">
+                                                <Setter Property="Foreground" Value="LightGray"/>
+                                                <Setter Property="FontStyle" Value="Italic"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBox.Style>
+                            </TextBox>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
-      </DataGrid.CellStyle>
-            
-      <DataGrid.CommandBindings>
-        <CommandBinding Command="Copy" Executed="CopyCommand" />
-      </DataGrid.CommandBindings>
 
-      <DataGrid.ContextMenu>
-        <ContextMenu>
-          <MenuItem Header="Copy" Command="Copy" />
-        </ContextMenu>
-      </DataGrid.ContextMenu>
+        <RoutedUICommand x:Key="SearchTextCommand" Text="Search text"  />
 
-      <DataGrid.InputBindings>
-        <KeyBinding Key="C" Modifiers="Control" Command="Copy" />
-      </DataGrid.InputBindings>
+        <Image x:Key="VisibilityImage" Source ="/Resources/visibility.png" Width="21" Height="21" />
+        <Image x:Key="VisibilityOffImage" Source ="/Resources/visibilityOff.png" Width="21" Height="21" />
+    </Window.Resources>
 
-      <DataGrid.Columns>
-        <DataGridTextColumn Header="Time" Binding="{Binding Path=Time, StringFormat='yyyy-MM-dd HH:mm:ss.fff'}" Width="145" IsReadOnly="True" CanUserSort="False"/>
-        <DataGridTextColumn Header="Level" Binding="{Binding Path=Level}" Width="50" IsReadOnly="True" CanUserSort="False"/>
-        <DataGridTextColumn Header="Logger" Binding="{Binding Path=Logger}" Width="110" IsReadOnly="True" CanUserSort="False"/>
-        <DataGridTextColumn Header="Message" Binding="{Binding Path=Message}" Width="*" IsReadOnly="True" CanUserSort="False"/>
-      </DataGrid.Columns>
+    <Window.CommandBindings>
+        <CommandBinding  Command="{StaticResource SearchTextCommand}" Executed="SearchText"  />
+    </Window.CommandBindings>
 
-      <DataGrid.Resources>
-        <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}" 
-                   Color="#007acc"/>
+    <Window.InputBindings>
+        <KeyBinding Key="F" Modifiers="Ctrl" Command="{StaticResource SearchTextCommand}" />
+    </Window.InputBindings>
 
-        <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightBrushKey}" 
-                   Color="#FFC9CBCD"/>
-      </DataGrid.Resources>
-    </DataGrid>
+    <Grid Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="32" />
+            <RowDefinition Height="32" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="auto" />
+            <RowDefinition Height="250" />
+        </Grid.RowDefinitions>
+
+        <ProgressBar x:Name="LoadBar" Grid.Row="0" Minimum="0" Maximum="100" Value="0" Height="5" Margin="0,-5,0,0" VerticalAlignment="Top" Panel.ZIndex="1" HorizontalAlignment="Stretch" Visibility="Hidden"/>
+
+        <Grid Grid.Row="0" VerticalAlignment="Top" Margin="0,2,0,0" >
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="auto" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="auto" />
+                <ColumnDefinition Width="auto" />
+            </Grid.ColumnDefinitions>
+            <ComboBox x:Name="LogsFileNames" Grid.Column="0" ItemsSource="{Binding}" HorizontalAlignment="Left"  VerticalAlignment="Center" Width="305" Height="25" Margin="0,0,0,0" FontSize="14" SelectedItem="{Binding LogFile}" DisplayMemberPath="Name" SelectionChanged="Files_SelectionChanged">
+            </ComboBox>
 
 
-    <GridSplitter Grid.Row="2" Grid.ColumnSpan="3" Height="5"
-        HorizontalAlignment="Stretch" VerticalAlignment="Center" />
+            <TextBox x:Name="Filter" Grid.Column="1" HorizontalAlignment="Stretch" Style="{StaticResource placeHolder}" Tag="Filter.." Text="" TextWrapping="Wrap" VerticalAlignment="Center" Height="25" FontSize="14" FontStyle="Normal" Margin="5,0,0,0" TextChanged="Filter_TextChanged"/>
 
-    <TabControl x:Name="BottomTabControl" Grid.Row="3" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" FontSize="12" FontStyle="Normal">
-      <TabItem x:Name="DetailsTab">
-        <TabItem.Header>
-          <StackPanel Orientation="Horizontal">
-            <TextBlock Margin="0">Details</TextBlock>
-          </StackPanel>
-        </TabItem.Header>
-        <TabItem.Content>
-          <TextBox x:Name="DetailText" Grid.Row="3" HorizontalAlignment="Stretch"  TextWrapping="NoWrap" VerticalAlignment="Stretch" FontSize="14" FontStyle="Normal" Margin="0,0,0,0"
-            ScrollViewer.HorizontalScrollBarVisibility="Auto"
-            ScrollViewer.VerticalScrollBarVisibility="Auto"
-            ScrollViewer.CanContentScroll="True" />
-        </TabItem.Content>
-      </TabItem>
-      <TabItem x:Name="SearchTab">
-        <TabItem.Header>
-          <StackPanel Orientation="Horizontal">
-            <TextBlock Margin="0">Search results</TextBlock>
-          </StackPanel>
-        </TabItem.Header>
-        <TabItem.Content>
-          <DataGrid x:Name="SearchGrid" AutoGenerateColumns="False" HorizontalGridLinesBrush="#FFC7C7C7" GridLinesVisibility="Horizontal" Margin="0,0,0,0" SelectionMode="Extended" RowHeight="20" CanUserAddRows="false" SelectionChanged="SearchGrid_SelectionChanged" >
+            <Button Grid.Column="2" Width="25" Height="25" Margin="5,0,0,0" HorizontalAlignment="Right" Command="{StaticResource SearchTextCommand}" >
+                <DockPanel>
+                    <Image Source="Resources/find.png"/>
+                </DockPanel>
+            </Button>
+
+            <Button Grid.Column="3" Width="25" Height="25" Margin="5,0,0,0" HorizontalAlignment="Right" Click="Settins_Click" >
+                <DockPanel>
+                    <Image Source="Resources/settings.png"/>
+                </DockPanel>
+            </Button>
+        </Grid>
+
+        <Grid Grid.Row="1"  Margin="0,0,0,0" >
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="auto" />
+                <ColumnDefinition Width="auto" />
+                <ColumnDefinition Width="auto" />
+                <ColumnDefinition Width="auto"/>
+                <ColumnDefinition Width="auto"/>
+            </Grid.ColumnDefinitions>
+
+            <ToggleButton x:Name="ColumnVisibilityToggleBtn" Grid.Column="0" Width="25" Height="25" Margin="0,0,0,0" Checked = "ColumnVisibilityCheck" Unchecked = "ColumnVisibilityUnchecked" HorizontalAlignment="Right">
+                <ToggleButton.Style>
+                    <Style TargetType="{x:Type ToggleButton}">
+                        <Style.Triggers>
+
+                            <Trigger Property="IsChecked" Value="true">
+                                <Setter Property="Content" Value ="{StaticResource VisibilityImage}" />
+                            </Trigger>
+                            <Trigger Property="IsChecked" Value="false">
+                                <Setter Property="Content" Value ="{StaticResource VisibilityOffImage}" />
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                </ToggleButton.Style>
+            </ToggleButton>
+
+            <Label  Grid.Column="1"  Content="Tenant" FontStyle="Normal" FontSize="14" VerticalAlignment="Center" Margin="5,0,0,0"/>
+            <ComboBox x:Name="TenantFilter" Grid.Column="2" HorizontalAlignment="Left"  VerticalAlignment="Center" FontStyle="Normal" Width="150" Height="25" Margin="0,0,0,0" FontSize="14" SelectionChanged="FilterTenant_SelectionChanged"/>
+
+            <Label  Grid.Column="3"  Content="Level" FontStyle="Normal" FontSize="14" VerticalAlignment="Center" Margin="5,0,0,0"/>
+            <ComboBox x:Name="LevelFilter" Grid.Column="4" HorizontalAlignment="Left"  VerticalAlignment="Center" FontStyle="Normal" Width="150" Height="25" Margin="0,0,0,0" FontSize="14" SelectionChanged="FilterLevel_SelectionChanged"/>
+
+        </Grid>
+
+        <DataGrid x:Name="LogsGrid" Grid.Row="2" AutoGenerateColumns="False" HorizontalGridLinesBrush="#FFC7C7C7" GridLinesVisibility="Horizontal" Margin="0,0,0,0" SelectionMode="Extended" RowHeight="20" SelectionChanged="LogsGrid_SelectionChanged" CanUserAddRows="false" >
 
             <DataGrid.CellStyle>
-              <Style TargetType="{x:Type DataGridCell}">
-                <Style.Triggers>
-                  <DataTrigger Binding="{Binding Level}" Value="Error">
-                    <Setter Property="Foreground" Value="Red" />
-                  </DataTrigger>
+                <Style TargetType="{x:Type DataGridCell}">
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding Level}" Value="Error">
+                            <Setter Property="Foreground" Value="Red" />
+                        </DataTrigger>
 
-                  <DataTrigger Binding="{Binding Level}" Value="Debug">
-                    <Setter Property="Foreground" Value="Blue" />
-                  </DataTrigger>
+                        <DataTrigger Binding="{Binding Level}" Value="Debug">
+                            <Setter Property="Foreground" Value="Blue" />
+                        </DataTrigger>
 
-                  <Trigger Property="IsSelected" Value="True">
-                    <Setter Property="BorderThickness" Value="0"/>
-                  </Trigger>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter Property="BorderThickness" Value="0"/>
+                        </Trigger>
 
-                  <Trigger Property="IsSelected" Value="True">
-                    <Setter Property="Foreground" Value="White"/>
-                  </Trigger>
-                </Style.Triggers>
-              </Style>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter Property="Foreground" Value="White"/>
+                        </Trigger>
+                    </Style.Triggers>
+                </Style>
             </DataGrid.CellStyle>
 
+            <DataGrid.CommandBindings>
+                <CommandBinding Command="Copy" Executed="CopyCommand" />
+            </DataGrid.CommandBindings>
+
+            <DataGrid.ContextMenu>
+                <ContextMenu>
+                    <MenuItem Header="Copy" Command="Copy" />
+                </ContextMenu>
+            </DataGrid.ContextMenu>
+
+            <DataGrid.InputBindings>
+                <KeyBinding Key="C" Modifiers="Control" Command="Copy" />
+            </DataGrid.InputBindings>
+
+            
             <DataGrid.Columns>
-              <DataGridTextColumn Header="Time" Binding="{Binding Path=Time, StringFormat='yyyy-MM-dd HH:mm:ss.fff'}" Width="145" IsReadOnly="True" CanUserSort="False"/>
-              <DataGridTextColumn Header="Level" Binding="{Binding Path=Level}" Width="50" IsReadOnly="True" CanUserSort="False"/>
-              <DataGridTextColumn Header="Logger" Binding="{Binding Path=Logger}" Width="110" IsReadOnly="True" CanUserSort="False"/>
-              <DataGridTextColumn Header="Message" Binding="{Binding Path=Message}" Width="*" IsReadOnly="True" CanUserSort="False"/>
+                <DataGridTextColumn Header="Time" Binding="{Binding Path=Time, StringFormat='yyyy-MM-dd HH:mm:ss.fff'}" Width="145" IsReadOnly="True" CanUserSort="False"/>
+                <DataGridTextColumn Header="Tenant" Binding="{Binding Path=Tenant}" Width="100" IsReadOnly="True" CanUserSort="False" Visibility="Collapsed"/>
+                <DataGridTextColumn Header="Pid" Binding="{Binding Path=Pid}" Width="80" IsReadOnly="True" CanUserSort="False" Visibility="Collapsed"/>
+                <DataGridTextColumn Header="Trace" Binding="{Binding Path=Trace}" Width="150" IsReadOnly="True" CanUserSort="False" Visibility="Collapsed"/>
+                <DataGridTextColumn Header="Level" Binding="{Binding Path=Level}" Width="50" IsReadOnly="True" CanUserSort="False"/>
+                <DataGridTextColumn Header="Logger" Binding="{Binding Path=Logger}" Width="110" IsReadOnly="True" CanUserSort="False"/>
+                <DataGridTextColumn Header="Message" Binding="{Binding Path=Message}" Width="auto" IsReadOnly="True" CanUserSort="False" ScrollViewer.HorizontalScrollBarVisibility="Visible"/>
+               
             </DataGrid.Columns>
 
             <DataGrid.Resources>
-              <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}" 
+                <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}" 
                    Color="#007acc"/>
 
-              <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightBrushKey}" 
+                <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightBrushKey}" 
                    Color="#FFC9CBCD"/>
             </DataGrid.Resources>
+        </DataGrid>
 
-          </DataGrid>
-        </TabItem.Content>
-      </TabItem>
-    </TabControl>
+        <GridSplitter Grid.Row="3" Grid.ColumnSpan="3" Height="5"
+        HorizontalAlignment="Stretch" VerticalAlignment="Center" />
+
+        <TabControl x:Name="BottomTabControl" Grid.Row="4" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" FontSize="12" FontStyle="Normal">
+            <TabItem x:Name="DetailsTab">
+                <TabItem.Header>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Margin="0">Details</TextBlock>
+                    </StackPanel>
+                </TabItem.Header>
+                <TabItem.Content>
+                    <TextBox x:Name="DetailText" Grid.Row="3" HorizontalAlignment="Stretch"  TextWrapping="NoWrap" VerticalAlignment="Stretch" FontSize="14" FontStyle="Normal" Margin="0,0,0,0"
+            ScrollViewer.HorizontalScrollBarVisibility="Auto"
+            ScrollViewer.VerticalScrollBarVisibility="Auto"
+            ScrollViewer.CanContentScroll="True" />
+                </TabItem.Content>
+            </TabItem>
+            <TabItem x:Name="SearchTab">
+                <TabItem.Header>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Margin="0">Search results</TextBlock>
+                    </StackPanel>
+                </TabItem.Header>
+                <TabItem.Content>
+                    <DataGrid x:Name="SearchGrid" AutoGenerateColumns="False" HorizontalGridLinesBrush="#FFC7C7C7" GridLinesVisibility="Horizontal" Margin="0,0,0,0" SelectionMode="Extended" RowHeight="20" CanUserAddRows="false" SelectionChanged="SearchGrid_SelectionChanged" >
+
+                        <DataGrid.CellStyle>
+                            <Style TargetType="{x:Type DataGridCell}">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Level}" Value="Error">
+                                        <Setter Property="Foreground" Value="Red" />
+                                    </DataTrigger>
+
+                                    <DataTrigger Binding="{Binding Level}" Value="Debug">
+                                        <Setter Property="Foreground" Value="Blue" />
+                                    </DataTrigger>
+
+                                    <Trigger Property="IsSelected" Value="True">
+                                        <Setter Property="BorderThickness" Value="0"/>
+                                    </Trigger>
+
+                                    <Trigger Property="IsSelected" Value="True">
+                                        <Setter Property="Foreground" Value="White"/>
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </DataGrid.CellStyle>
+
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Time" Binding="{Binding Path=Time, StringFormat='yyyy-MM-dd HH:mm:ss.fff'}" Width="145" IsReadOnly="True" CanUserSort="False"/>
+                            <DataGridTextColumn Header="Level" Binding="{Binding Path=Level}" Width="50" IsReadOnly="True" CanUserSort="False"/>
+                            <DataGridTextColumn Header="Logger" Binding="{Binding Path=Logger}" Width="110" IsReadOnly="True" CanUserSort="False"/>
+                            <DataGridTextColumn Header="Message" Binding="{Binding Path=Message}" Width="*" IsReadOnly="True" CanUserSort="False"/>
+                        </DataGrid.Columns>
+
+                        <DataGrid.Resources>
+                            <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}" 
+                   Color="#007acc"/>
+
+                            <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightBrushKey}" 
+                   Color="#FFC9CBCD"/>
+                        </DataGrid.Resources>
+
+                    </DataGrid>
+                </TabItem.Content>
+            </TabItem>
+        </TabControl>
 
 
 
 
-    <tb:TaskbarIcon Visibility="Visible" 
+        <tb:TaskbarIcon Visibility="Visible" 
       IconSource="Resources/horse_icon.ico" 
       ToolTipText="Json Log Viewer"
       MenuActivation="RightClick"
       PopupActivation="RightClick" TrayLeftMouseUp="TaskbarIcon_TrayLeftMouseUp">
-      <tb:TaskbarIcon.ContextMenu>
-        <ContextMenu>
-          <MenuItem Click="Exit_Click"
+            <tb:TaskbarIcon.ContextMenu>
+                <ContextMenu>
+                    <MenuItem Click="Exit_Click"
                     Header="Exit" />
-        </ContextMenu>
-      </tb:TaskbarIcon.ContextMenu>
-    </tb:TaskbarIcon>
+                </ContextMenu>
+            </tb:TaskbarIcon.ContextMenu>
+        </tb:TaskbarIcon>
 
-  </Grid>
+    </Grid>
 
 
 
