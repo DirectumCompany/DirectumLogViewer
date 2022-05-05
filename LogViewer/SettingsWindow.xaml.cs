@@ -15,7 +15,7 @@ namespace LogViewer
     public static string WhitelistLogs { get; set; }
     public static bool BackgroundConvert { get; set; }
 
-    private static readonly string DefaultLogPath = @"D:\Projects\master\Logs";
+    private static readonly string DefaultLogPath = @"C:\inetpub\logs";
     private static readonly string RegKey = @"SOFTWARE\JsonLogViewerSettings";
     private static readonly string LogsPathKey = "LogsPath";
     private static readonly string WhitelistKey = "WhiteList";
