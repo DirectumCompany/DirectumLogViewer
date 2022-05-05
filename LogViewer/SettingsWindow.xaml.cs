@@ -24,6 +24,7 @@ namespace LogViewer
     {
       "${machinename}.WebServer.${shortdate}",
       "${machinename}.Worker.${shortdate}",
+      "${machinename}.WorkerNetFx.${shortdate}",
       "${machinename}.WorkflowBlockService.${shortdate}",
       "${machinename}.WorkflowProcessService.${shortdate}",
       "${machinename}.IntegrationService.${shortdate}",
