@@ -1,6 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
-using System.Threading;
+using System.Timers;
 
 namespace LogReader
 {
@@ -11,8 +12,8 @@ namespace LogReader
   {
     public bool IsStartedWatching { get => timer != null; }
 
-    public delegate void NewLineHandler(string line, bool isEndLine, double process);
-    public event NewLineHandler NewLine;
+    public delegate void BlockNewLinesHandler(List<string> lines, bool isEndFile, double progress);
+    public event BlockNewLinesHandler BlockNewLines;
 
     public delegate void FileReCreatedHandler();
     public event FileReCreatedHandler FileReCreated;
@@ -22,6 +23,8 @@ namespace LogReader
     private Timer timer;
     private readonly object readLock = new object();
     private long fileLength;
+
+    private const int LineBlockSize = 100;
 
     public LogWatcher(string filePath)
     {
@@ -35,18 +38,11 @@ namespace LogReader
       if (timer != null)
         throw new Exception("Already started watching");
 
-      var timerState = new TimerState { Counter = 0 };
-
-      timer = new Timer(
-          callback: new TimerCallback(TimerTask),
-          state: timerState,
-          dueTime: period / 2,
-          period: period);
-    }
-
-    private void TimerTask(object timerState)
-    {
-      ReadToEndLine();
+      timer = new Timer();
+      timer.AutoReset = false;
+      timer.Interval = period;
+      timer.Elapsed += OnTimedEvent;
+      timer.Start();
     }
 
     public void ReadToEndLine()
@@ -54,23 +50,34 @@ namespace LogReader
       lock (readLock)
       {
         var current_length = streamReader.BaseStream.Length;
+
         if (current_length < fileLength)
         {
           streamReader.DiscardBufferedData();
           streamReader.BaseStream.Seek(0, SeekOrigin.Begin);
           FileReCreated?.Invoke();
         }
-        fileLength = current_length;
 
+        fileLength = current_length;
         string line;
+        List<string> lines = new List<string>();
+
         while (streamReader != null && (line = streamReader.ReadLine()) != null)
         {
           if (!String.IsNullOrEmpty(line))
           {
-            var process = 100 * (streamReader.BaseStream.Position + 1) / (fileLength + 1);
-            NewLine?.Invoke(line, streamReader.Peek() == -1, process);
+            lines.Add(line);
+
+            if (lines.Count >= LineBlockSize)
+            {
+              InvokeBlockNewLinesEvent(lines);
+              lines.Clear();
+            }
           }
         }
+
+        if (lines.Count > 0)
+          InvokeBlockNewLinesEvent(lines);
       }
     }
 
@@ -95,9 +102,17 @@ namespace LogReader
       }
     }
 
-    class TimerState
+    private void OnTimedEvent(Object source, ElapsedEventArgs e)
     {
-      public int Counter;
+      ReadToEndLine();
+      timer.Start();
     }
+
+    private void InvokeBlockNewLinesEvent(List<string> lines)
+    {
+      var progress = fileLength == 0 ? 100 : 100 * streamReader.BaseStream.Position / fileLength;
+      BlockNewLines?.Invoke(lines, streamReader.Peek() == -1, progress);
+    }
+
   }
 }

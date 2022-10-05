@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
 
 namespace LogReader
@@ -108,6 +109,18 @@ namespace LogReader
       {
         return new LogLine { Message = jsonLine };
       }
+    }
+
+    public static LogLine[] ConvertLinesToObjects(List<string> lines)
+    {
+      var logLines = new LogLine[lines.Count];
+
+      Parallel.ForEach(lines, (line, state, index) =>
+      {
+        logLines[index] = ConvertToObject(line);
+      });
+
+      return logLines;
     }
 
     public static Dictionary<string, string> ConvertObjectToDict(LogLine logLine)

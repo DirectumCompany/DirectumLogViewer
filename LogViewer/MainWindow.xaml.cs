@@ -64,7 +64,9 @@ namespace LogViewer
       SettingsWindow.Load();
 
       if (SettingsWindow.IsFirstRun() && !SettingsWindow.ShowSettingsDialog() == true)
-        System.Windows.Application.Current.Shutdown();
+      {
+        Application.Current.Shutdown();
+      }
 
       notificationIcon = SaveNotifyLogoFromResource();
 
@@ -79,12 +81,15 @@ namespace LogViewer
 
     private Uri SaveNotifyLogoFromResource()
     {
-      var directory = Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData);
-      var imageFilePath = System.IO.Path.Combine(directory, iconFileName);
+      string directory = Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData);
+      string imageFilePath = Path.Combine(directory, iconFileName);
 
-      ImageConverter converter = new ImageConverter();
-      var data = (byte[])converter.ConvertTo(Properties.Resources.horse, typeof(byte[]));
-      File.WriteAllBytes(imageFilePath, data);
+      if (!File.Exists(imageFilePath))
+      {
+        ImageConverter converter = new ImageConverter();
+        byte[] data = (byte[])converter.ConvertTo(Properties.Resources.horse, typeof(byte[]));
+        File.WriteAllBytes(imageFilePath, data);
+      }
 
       return new Uri(imageFilePath);
     }
@@ -102,7 +107,7 @@ namespace LogViewer
         .ToArray();
 
       return allfiles.Select(f => new LogFile(f))
-        .Where(n => whiteList.Contains(System.IO.Path.GetFileNameWithoutExtension(n.Name.ToLower())) && !n.Name.StartsWith(LogHandler.ConvertedFilePrefix))
+        .Where(n => whiteList.Contains(System.IO.Path.GetFileNameWithoutExtension(n.Name.ToLower())))
         .Select(r => r.FullPath)
         .ToArray();
     }
@@ -110,7 +115,7 @@ namespace LogViewer
     private void CreateHandlers(string[] files)
     {
       foreach (var file in files)
-        Task.Run(() => LogHandlers.Add(new LogHandler(file, notificationIcon, SettingsWindow.BackgroundConvert)));
+        Task.Run(() => LogHandlers.Add(new LogHandler(file, notificationIcon)));
     }
 
     private void InitControls(string[] files)
@@ -225,7 +230,7 @@ namespace LogViewer
         LevelFilter.IsEnabled = false;
 
         logWatcher = new LogWatcher(fullPath);
-        logWatcher.NewLine += OnNewLine;
+        logWatcher.BlockNewLines += OnBlockNewLines;
         logWatcher.FileReCreated += OnFileReCreated;
         logWatcher.ReadToEndLine();
         LogsGrid.ItemsSource = logLines;
@@ -286,7 +291,7 @@ namespace LogViewer
         if (CommonFileDialogResult.Ok == dialog.ShowDialog())
         {
           // Создать фоновый обработчик для нового файла.
-          LogHandlers.Add(new LogHandler(dialog.FileName, notificationIcon, SettingsWindow.BackgroundConvert));
+          LogHandlers.Add(new LogHandler(dialog.FileName, notificationIcon));
 
           var logFile = new LogFile(dialog.FileName);
           comboBox.Items.Insert(comboBox.Items.Count - 1, logFile);
@@ -321,15 +326,15 @@ namespace LogViewer
       return result;
     }
 
-    private void OnNewLine(string line, bool isEndLine, double process)
+    private void OnBlockNewLines(List<string> lines, bool isEndFile, double progress)
     {
-      var logLine = Converter.ConvertToObject(line);
+      var convertedLogLines = Converter.ConvertLinesToObjects(lines);
 
       Application.Current.Dispatcher.Invoke(
         new Action(() =>
         {
-          if (LoadBar.Visibility == Visibility.Visible && LoadBar.Value != process)
-            LoadBar.Dispatcher.Invoke(() => LoadBar.Value = process, DispatcherPriority.Background);
+          if (LoadBar.Visibility == Visibility.Visible && LoadBar.Value != progress)
+            LoadBar.Dispatcher.Invoke(() => LoadBar.Value = progress, DispatcherPriority.Background);
 
           var scrollToEnd = false;
 
@@ -341,10 +346,14 @@ namespace LogViewer
               scrollToEnd = true;
           }
 
-          logLines.Add(logLine);
+          foreach (var logLine in convertedLogLines)
+          {
+            logLines.Add(logLine);
+          }
 
           if (scrollToEnd)
-            LogsGrid.ScrollIntoView(logLine);
+            LogsGrid.ScrollIntoView(convertedLogLines.Last());
+
         }));
     }
 
@@ -391,6 +400,11 @@ namespace LogViewer
           DetailText.Text += line.FullMessage;
         }
       }
+    }
+
+    private void LogsGrid_RequestBringIntoView(object sender, RequestBringIntoViewEventArgs e)
+    {
+      e.Handled = !(e.Source is System.Windows.Controls.DataGridRow);
     }
 
     private void Settins_Click(object sender, RoutedEventArgs e)

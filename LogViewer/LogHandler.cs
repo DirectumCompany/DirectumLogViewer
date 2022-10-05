@@ -1,6 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
-using System.Text;
 using LogReader;
 using Microsoft.Toolkit.Uwp.Notifications;
 
@@ -11,98 +11,56 @@ namespace LogViewer
   /// </summary>
   class LogHandler
   {
-    public static readonly string ConvertedFilePrefix = "Converted_";
-
-    public static readonly string LogLevelError = "Error";
-
-    public static readonly int NotificationTextMaxLength = 200;
+    public const string LogLevelError = "Error";
+    private const int NotificationTextMaxLength = 200;
+    private const int WatchPeriod = 3000;
 
     private readonly string filePath;
     private readonly Uri icon;
-    private readonly bool backgroundConvert;
-
-    private readonly string directoryName;
     private readonly string fileName;
-
-    private StreamWriter writer;
     private readonly LogWatcher watcher;
-    private readonly int watchPeriod = 3000;
 
-    public LogHandler(string filePath, Uri icon, bool backgroundConvert)
+    public LogHandler(string filePath, Uri icon)
     {
       this.filePath = filePath;
       this.icon = icon;
-      this.backgroundConvert = backgroundConvert;
-
-      directoryName = Path.GetDirectoryName(filePath);
       fileName = Path.GetFileName(filePath);
 
-      if (this.backgroundConvert)
-      {
-        try
-        {
-          writer = new StreamWriter(Path.Combine(directoryName, ConvertedFilePrefix + fileName), false, new UTF8Encoding());
-        }
-        catch
-        {
-          // TODO Сообщить пользователю о проблеме, фоновая конвертация выключена по умолчанию.
-        }
-      }
-
       watcher = new LogWatcher(filePath);
-      watcher.NewLine += OnNewLine;
-      watcher.FileReCreated += OnFileReCreated;
+      watcher.BlockNewLines += OnBlockNewLines;
       watcher.ReadToEndLine();
-      watcher.StartWatch(watchPeriod);
+      watcher.StartWatch(WatchPeriod);
     }
 
-    private void OnNewLine(string line, bool isEndLine, double process)
+    private void OnBlockNewLines(List<string> lines, bool isEndFile, double progress)
     {
-      // Write to converted log
-      if (backgroundConvert && writer != null)
-      {
-        var converted = Converter.ConvertToTsv(line);
-
-        writer.Write(converted);
-        writer.Write('\n');
-        if (isEndLine)
-          writer.Flush();
-      }
-
-      // Show notify
       if (watcher.IsStartedWatching)
       {
-        var logLine = Converter.ConvertToObject(line);
+        var convertedLogLines = Converter.ConvertLinesToObjects(lines);
 
-        if (logLine.Level == LogLevelError)
+        foreach (var logLine in convertedLogLines)
         {
-          try
+          if (logLine.Level == LogLevelError)
           {
-            var truncatedMessage = logLine.Message.Substring(0, Math.Min(NotificationTextMaxLength, logLine.Message.Length));
+            try
+            {
+              var truncatedMessage = logLine.Message.Substring(0, Math.Min(NotificationTextMaxLength, logLine.Message.Length));
 
-            new ToastContentBuilder()
-                .AddArgument(MainWindow.NotificationTypeKey, MainWindow.NotificationError)
-                .AddArgument(MainWindow.NotificationFilePathKey, filePath)
-                .AddArgument(MainWindow.NotificationTimeKey, logLine.Time.Ticks.ToString())
-                .AddAppLogoOverride(icon, ToastGenericAppLogoCrop.Circle)
-                .AddText(fileName)
-                .AddText(truncatedMessage)
-                .Show();
-          }
-          catch
-          {
-            // TODO не всегда приходят уведомлялки
+              new ToastContentBuilder()
+                  .AddArgument(MainWindow.NotificationTypeKey, MainWindow.NotificationError)
+                  .AddArgument(MainWindow.NotificationFilePathKey, filePath)
+                  .AddArgument(MainWindow.NotificationTimeKey, logLine.Time.Ticks.ToString())
+                  .AddAppLogoOverride(icon, ToastGenericAppLogoCrop.Circle)
+                  .AddText(fileName)
+                  .AddText(truncatedMessage)
+                  .Show();
+            }
+            catch
+            {
+              // TODO не всегда приходят уведомлялки
+            }
           }
         }
-      }
-    }
-
-    private void OnFileReCreated()
-    {
-      if (writer != null)
-      {
-        writer.Close();
-        writer = new StreamWriter(Path.Combine(directoryName, ConvertedFilePrefix + fileName), false, new UTF8Encoding());
       }
     }
   }

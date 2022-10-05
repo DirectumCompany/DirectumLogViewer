@@ -122,6 +122,7 @@
 
             <DataGrid.CellStyle>
                 <Style TargetType="{x:Type DataGridCell}">
+                    
                     <Style.Triggers>
                         <DataTrigger Binding="{Binding Level}" Value="Error">
                             <Setter Property="Foreground" Value="Red" />
@@ -141,6 +142,12 @@
                     </Style.Triggers>
                 </Style>
             </DataGrid.CellStyle>
+
+            <DataGrid.RowStyle>
+                <Style TargetType="{x:Type DataGridRow}">
+                    <EventSetter Event="Control.RequestBringIntoView" Handler="LogsGrid_RequestBringIntoView"  />
+                </Style>
+            </DataGrid.RowStyle>
 
             <DataGrid.CommandBindings>
                 <CommandBinding Command="Copy" Executed="CopyCommand" />
