@@ -24,7 +24,7 @@ namespace LogReader
     private readonly object readLock = new object();
     private long fileLength;
 
-    private const int LineBlockSize = 100;
+    private const int LineBlockSize = 500;
 
     public LogWatcher(string filePath)
     {

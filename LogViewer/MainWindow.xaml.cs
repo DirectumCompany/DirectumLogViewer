@@ -422,13 +422,6 @@ namespace LogViewer
       Application.Current.Shutdown();
     }
 
-    protected override void OnClosing(CancelEventArgs e)
-    {
-      e.Cancel = true;
-      this.Hide();
-      base.OnClosing(e);
-    }
-
     private void TaskbarIcon_TrayLeftMouseUp(object sender, RoutedEventArgs e)
     {
       BringToForeground();
