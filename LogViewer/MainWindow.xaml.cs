@@ -299,12 +299,23 @@ namespace LogViewer
 
         if (CommonFileDialogResult.Ok == dialog.ShowDialog())
         {
-          // Создать фоновый обработчик для нового файла.
-          LogHandlers.Add(new LogHandler(dialog.FileName, notificationIcon));
+          var logFiles = comboBox.Items.Cast<LogFile>().ToList();
 
-          var logFile = new LogFile(dialog.FileName);
-          comboBox.Items.Insert(comboBox.Items.Count - 1, logFile);
-          comboBox.SelectedItem = logFile;
+          var logFile = logFiles.FirstOrDefault(l => string.Equals(l.FullPath, dialog.FileName, StringComparison.InvariantCultureIgnoreCase));
+
+          if (logFile != null)
+          {
+            comboBox.SelectedItem = logFile;
+          }
+          else
+          {
+            // Создать фоновый обработчик для нового файла.
+            LogHandlers.Add(new LogHandler(dialog.FileName, notificationIcon));
+
+            logFile = new LogFile(dialog.FileName);
+            comboBox.Items.Insert(comboBox.Items.Count - 1, logFile);
+            comboBox.SelectedItem = logFile;
+          }
         }
         else
         {
@@ -505,8 +516,6 @@ namespace LogViewer
     {
       if (logLinesView == null)
         return;
-
-
 
       var needFilter = !String.IsNullOrEmpty(text) ||
         (!String.Equals(tenant, All) && !String.IsNullOrEmpty(tenant)) ||
