@@ -39,7 +39,7 @@
 
     <WrapPanel Grid.Row="5" HorizontalAlignment="Right" Margin="0,0,0,0" VerticalAlignment="Bottom">
       <Button IsDefault="False" Click="Accept_Click" MinWidth="60" Margin="0,0,10,0">OK</Button>
-      <Button IsCancel="True" MinWidth="60">Отмена</Button>
+            <Button IsCancel="True" MinWidth="60">Cancel</Button>
     </WrapPanel>
 
   </Grid>

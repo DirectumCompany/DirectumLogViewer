@@ -557,6 +557,7 @@ namespace LogViewer
         return;
 
       var dialog = new SearchWindow();
+      dialog.Owner = this;
       var result = dialog.ShowDialog();
 
       if (result == true)
