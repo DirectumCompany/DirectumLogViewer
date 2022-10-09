@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:LogViewer"
         xmlns:tb="http://www.hardcodet.net/taskbar"
         mc:Ignorable="d"
-        Title="Directum Log Viewer" Height="650" Width="1024" SizeToContent="Manual" WindowStartupLocation="CenterScreen" WindowState="Maximized">
+        Title="{Binding WindowTitle}" Height="650" Width="1024" SizeToContent="Manual" WindowStartupLocation="CenterScreen" WindowState="Maximized">
 
     <Window.Resources>
         <Style x:Key="placeHolder" TargetType="{x:Type TextBox}" BasedOn="{StaticResource {x:Type TextBox}}">
@@ -76,7 +76,7 @@
                 <ColumnDefinition Width="auto" />
                 <ColumnDefinition Width="auto" />
             </Grid.ColumnDefinitions>
-            <ComboBox x:Name="LogsFileNames" Grid.Column="0" ItemsSource="{Binding}" HorizontalAlignment="Left"  VerticalAlignment="Center" Width="305" Height="25" Margin="0,0,0,0" FontSize="14" SelectedItem="{Binding LogFile}" DisplayMemberPath="Name" SelectionChanged="Files_SelectionChanged">
+            <ComboBox x:Name="LogsFileNames" Grid.Column="0" ItemsSource="{Binding}" HorizontalAlignment="Left"  VerticalAlignment="Center" Width="305" Height="25" Margin="0,0,0,0" FontSize="14" DisplayMemberPath="Name" SelectionChanged="Files_SelectionChanged">
             </ComboBox>
 
             <Label Grid.Column="1" Content="Tenant" FontStyle="Normal" FontSize="14" VerticalAlignment="Top" Margin="5,0,0,0"/>
