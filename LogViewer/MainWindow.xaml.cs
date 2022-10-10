@@ -148,6 +148,13 @@ namespace LogViewer
     {
       LevelFilter.Items.Clear();
       LevelFilter.Items.Add(All);
+      LevelFilter.Items.Add("Trace");
+      LevelFilter.Items.Add("Debug");
+      LevelFilter.Items.Add("Info");
+      LevelFilter.Items.Add("Warn");
+      LevelFilter.Items.Add("Error");
+      LevelFilter.Items.Add("Fatal");
+
       LevelFilter.SelectedValue = All;
     }
 
@@ -212,12 +219,13 @@ namespace LogViewer
         logWatcher = null;
       }
 
-      this.Title = WindowTitle;
-      LogsGrid.ItemsSource = null;
-      SearchGrid.ItemsSource = null;
       logLines.Clear();
       InitTenantFilter();
       InitLevelFilter();
+      this.Title = WindowTitle;
+      LogsGrid.ItemsSource = null;
+      SearchGrid.ItemsSource = null;
+      filteredLogLines = null;
       GC.Collect();
     }
 
@@ -232,10 +240,13 @@ namespace LogViewer
         ColumnVisibilityToggleBtn.IsEnabled = false;
         TenantFilter.IsEnabled = false;
         LevelFilter.IsEnabled = false;
+
         var filterValue = Filter.Text;
         Filter.Clear();
-        filteredLogLines = null;
+
         this.Title = string.Format($"{WindowTitle} ({fullPath})");
+        LogsGrid.ItemsSource = null;
+        filteredLogLines = null;
 
         logWatcher = new LogWatcher(fullPath);
         logWatcher.BlockNewLines += OnBlockNewLines;
@@ -247,18 +258,11 @@ namespace LogViewer
         gridScrollViewer.ScrollToEnd();
         logWatcher.StartWatch(gridUpdatePeriod);
 
-        var tenants = logLines.Where(l => !string.IsNullOrEmpty(l.Tenant)).Select(l => l.Tenant).Distinct();
+        var tenants = logLines.Where(l => !string.IsNullOrEmpty(l.Tenant)).Select(l => l.Tenant).Distinct().OrderBy(l => l);
 
         foreach (var tenant in tenants)
         {
           TenantFilter.Items.Add(tenant);
-        }
-
-        var levels = logLines.Where(l => !string.IsNullOrEmpty(l.Level)).Select(l => l.Level).Distinct();
-
-        foreach (var level in levels)
-        {
-          LevelFilter.Items.Add(level);
         }
       }
       catch (Exception e)
@@ -529,14 +533,12 @@ namespace LogViewer
       else
       {
         filteredLogLines = null;
-        if (LogsGrid.ItemsSource != null)
-          LogsGrid.ItemsSource = logLines;
+        LogsGrid.ItemsSource = logLines;
       }
 
       if (LogsGrid.SelectedItem != null)
-      {
         LogsGrid.ScrollIntoView(LogsGrid.SelectedItem);
-      }
+
     }
 
     private void CopyCommand(object sender, ExecutedRoutedEventArgs e)
