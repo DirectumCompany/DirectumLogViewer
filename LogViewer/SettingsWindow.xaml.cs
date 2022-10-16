@@ -13,13 +13,13 @@ namespace LogViewer
   {
     public static string LogsPath { get; set; }
     public static string WhitelistLogs { get; set; }
-    public static bool BackgroundConvert { get; set; }
+    public static bool AssociateLogFile { get; set; }
 
     private static readonly string DefaultLogPath = @"D:\Projects\master\Logs";
     private static readonly string RegKey = @"SOFTWARE\JsonLogViewerSettings";
     private static readonly string LogsPathKey = "LogsPath";
     private static readonly string WhitelistKey = "WhiteList";
-    private static readonly string BackgroundConvertKey = "BackgroundConvert";
+    private static readonly string AssociateLogFileKey = "AssociateLogFile";
     private static readonly List<string> DefaultListLogs = new List<string>
     {
       "${machinename}.WebServer.${shortdate}",
@@ -56,7 +56,7 @@ namespace LogViewer
         using RegistryKey key = Registry.CurrentUser.CreateSubKey(RegKey);
         key.SetValue(LogsPathKey, dialog.LogsPathTextBox.Text);
         key.SetValue(WhitelistKey, dialog.WhiteListTextBox.Text);
-        key.SetValue(BackgroundConvertKey, dialog.BackgroundConvertCheckBox.IsChecked);
+        key.SetValue(AssociateLogFileKey, dialog.AssociateLogFileCheckBox.IsChecked);
         key.Close();
       }
 
@@ -71,7 +71,7 @@ namespace LogViewer
 
       WhitelistLogs = (string)key.GetValue(WhitelistKey, string.Join("\n", DefaultListLogs));
 
-      BackgroundConvert = Convert.ToBoolean(key.GetValue(BackgroundConvertKey, false));
+      AssociateLogFile = Convert.ToBoolean(key.GetValue(AssociateLogFileKey, false));
 
       key.Close();
     }

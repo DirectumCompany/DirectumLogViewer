@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:LogViewer"
         xmlns:tb="http://www.hardcodet.net/taskbar"
         mc:Ignorable="d"
-        Title="{Binding WindowTitle}" Height="650" Width="1024" SizeToContent="Manual" WindowStartupLocation="CenterScreen" WindowState="Maximized">
+        Title="{Binding WindowTitle}" Height="650" Width="1024" SizeToContent="Manual" WindowStartupLocation="CenterScreen" WindowState="Maximized" ContentRendered="Window_ContentRendered">
 
     <Window.Resources>
         <Style x:Key="placeHolder" TargetType="{x:Type TextBox}" BasedOn="{StaticResource {x:Type TextBox}}">

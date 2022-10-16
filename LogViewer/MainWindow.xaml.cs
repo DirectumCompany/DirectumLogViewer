@@ -68,9 +68,12 @@ namespace LogViewer
 
       SettingsWindow.Load();
 
-      if (SettingsWindow.IsFirstRun() && !SettingsWindow.ShowSettingsDialog() == true)
+      if (SettingsWindow.IsFirstRun())
       {
-        Application.Current.Shutdown();
+        if (SettingsWindow.ShowSettingsDialog() == true)
+          ApplySettings();
+        else
+          Application.Current.Shutdown();
       }
 
       notificationIcon = SaveNotifyLogoFromResource();
@@ -254,8 +257,8 @@ namespace LogViewer
         logWatcher.ReadToEndLine();
         LogsGrid.ItemsSource = logLines;
         Filter.Text = filterValue;
-        gridScrollViewer = GetScrollViewer(LogsGrid);
-        gridScrollViewer.ScrollToEnd();
+        LogsGrid.ScrollIntoView(logLines.Last());
+
         logWatcher.StartWatch(gridUpdatePeriod);
 
         var tenants = logLines.Where(l => !string.IsNullOrEmpty(l.Tenant)).Select(l => l.Tenant).Distinct().OrderBy(l => l);
@@ -302,29 +305,9 @@ namespace LogViewer
         dialog.Filters.Add(new CommonFileDialogFilter("Log Files (*.log)", ".log"));
 
         if (CommonFileDialogResult.Ok == dialog.ShowDialog())
-        {
-          var logFiles = comboBox.Items.Cast<LogFile>().ToList();
-
-          var logFile = logFiles.FirstOrDefault(l => string.Equals(l.FullPath, dialog.FileName, StringComparison.InvariantCultureIgnoreCase));
-
-          if (logFile != null)
-          {
-            comboBox.SelectedItem = logFile;
-          }
-          else
-          {
-            // Создать фоновый обработчик для нового файла.
-            LogHandlers.Add(new LogHandler(dialog.FileName, notificationIcon));
-
-            logFile = new LogFile(dialog.FileName);
-            comboBox.Items.Insert(comboBox.Items.Count - 1, logFile);
-            comboBox.SelectedItem = logFile;
-          }
-        }
+          SelectFileToOpen(dialog.FileName);
         else
-        {
           comboBox.SelectedItem = null;
-        }
 
         return;
       }
@@ -333,23 +316,6 @@ namespace LogViewer
 
       openedFileFullPath = selectedItem.FullPath;
       OpenLogFile(openedFileFullPath);
-    }
-
-    private ScrollViewer GetScrollViewer(UIElement element)
-    {
-      if (element == null)
-        return null;
-
-      ScrollViewer result = null;
-      for (int i = 0; i < VisualTreeHelper.GetChildrenCount(element) && result == null; i++)
-      {
-        if (VisualTreeHelper.GetChild(element, i) is ScrollViewer)
-          result = (ScrollViewer)(VisualTreeHelper.GetChild(element, i));
-        else
-          result = GetScrollViewer(VisualTreeHelper.GetChild(element, i) as UIElement);
-      }
-
-      return result;
     }
 
     private void OnBlockNewLines(List<string> lines, bool isEndFile, double progress)
@@ -413,19 +379,19 @@ namespace LogViewer
         DetailText.Text = String.Empty;
 
         if (!String.IsNullOrEmpty(line.UserName))
-          DetailText.Text += $"UserName: {line.UserName} \n";
+          DetailText.Text += $"UserName: {line.UserName}\n";
 
         if (!String.IsNullOrEmpty(line.Tenant))
-          DetailText.Text += $"Tenant: {line.Tenant} \n";
+          DetailText.Text += $"Tenant: {line.Tenant}\n";
 
         if (!String.IsNullOrEmpty(line.Pid))
-          DetailText.Text += $"Pid: {line.Pid} \n";
+          DetailText.Text += $"Pid: {line.Pid}\n";
 
         if (!String.IsNullOrEmpty(line.Trace))
-          DetailText.Text += $"Trace: {line.Trace} \n";
+          DetailText.Text += $"Trace: {line.Trace}\n";
 
         if (!String.IsNullOrEmpty(line.Version))
-          DetailText.Text += $"Version: {line.Version} \n";
+          DetailText.Text += $"Version: {line.Version}\n";
 
         if (!String.IsNullOrEmpty(line.FullMessage))
         {
@@ -446,6 +412,7 @@ namespace LogViewer
     {
       if (SettingsWindow.ShowSettingsDialog() == true)
       {
+        ApplySettings();
         // TODO сделать применение настроек без перезапуска приложения.
         MessageBox.Show("Settings will be applied after restarting the application");
         Application.Current.Shutdown();
@@ -616,6 +583,47 @@ namespace LogViewer
       foreach (var columns in LogsGrid.Columns.Where(c => hiddenColumns.Contains(c.Header)))
       {
         columns.Visibility = Visibility.Collapsed;
+      }
+    }
+
+    private void ApplySettings()
+    {
+      if (SettingsWindow.AssociateLogFile == true)
+        FileAssociations.SetAssociation();
+      else
+        FileAssociations.RemoveAssociation();
+    }
+
+    private void SelectFileToOpen(string fileName)
+    {
+      var logFiles = LogsFileNames.Items.Cast<LogFile>().ToList();
+
+      var logFile = logFiles.FirstOrDefault(l => string.Equals(l.FullPath, fileName, StringComparison.InvariantCultureIgnoreCase));
+
+      if (logFile != null)
+      {
+        LogsFileNames.SelectedItem = logFile;
+      }
+      else
+      {
+        // Создать фоновый обработчик для нового файла.
+        LogHandlers.Add(new LogHandler(fileName, notificationIcon));
+
+        logFile = new LogFile(fileName);
+        LogsFileNames.Items.Insert(LogsFileNames.Items.Count - 1, logFile);
+        LogsFileNames.SelectedItem = logFile;
+      }
+    }
+
+    private void Window_ContentRendered(object sender, EventArgs e)
+    {
+      var args = Environment.GetCommandLineArgs();
+      if (args.Length > 1)
+      {
+        var fileName = args[1];
+
+        if (File.Exists(fileName) && Path.GetExtension(fileName) == ".log")
+          SelectFileToOpen(fileName);
       }
     }
   }
