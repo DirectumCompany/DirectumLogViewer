@@ -269,6 +269,7 @@ namespace LogViewer
         logWatcher.ReadToEndLine();
         LogsGrid.ItemsSource = logLines;
         Filter.Text = filterValue;
+        gridScrollViewer = GetScrollViewer(LogsGrid);
         LogsGrid.ScrollIntoView(logLines.Last());
 
         logWatcher.StartWatch(gridUpdatePeriod);
@@ -638,5 +639,23 @@ namespace LogViewer
           SelectFileToOpen(fileName);
       }
     }
+
+    private ScrollViewer GetScrollViewer(UIElement element)
+    {
+      if (element == null)
+        return null;
+
+      ScrollViewer result = null;
+      for (int i = 0; i < VisualTreeHelper.GetChildrenCount(element) && result == null; i++)
+      {
+        if (VisualTreeHelper.GetChild(element, i) is ScrollViewer)
+          result = (ScrollViewer)(VisualTreeHelper.GetChild(element, i));
+        else
+          result = GetScrollViewer(VisualTreeHelper.GetChild(element, i) as UIElement);
+      }
+
+      return result;
+    }
+
   }
 }
