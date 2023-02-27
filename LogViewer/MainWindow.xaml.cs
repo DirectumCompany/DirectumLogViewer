@@ -159,6 +159,7 @@ namespace LogViewer
       TenantFilter.Items.Add(All);
       TenantFilter.SelectedValue = All;
     }
+
     private void InitLevelFilter()
     {
       LevelFilter.Items.Clear();
@@ -216,9 +217,13 @@ namespace LogViewer
               if (!string.IsNullOrEmpty(Filter.Text))
                 Filter.Text = null;
 
+              if (LevelFilter.SelectedValue != All)
+                LevelFilter.SelectedValue = All;
+
               SetFilter(string.Empty, All, All);
               LogsGrid.SelectedItem = itemWithError;
               LogsGrid.ScrollIntoView(itemWithError);
+              Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.ApplicationIdle, new Action(() => LogsGrid.Focus()));
             }
           });
         }
@@ -255,8 +260,6 @@ namespace LogViewer
         ColumnVisibilityToggleBtn.IsEnabled = false;
         TenantFilter.IsEnabled = false;
         LevelFilter.IsEnabled = false;
-
-        var filterValue = Filter.Text;
         Filter.Clear();
 
         this.Title = string.Format($"{WindowTitle} ({fullPath})");
@@ -268,7 +271,6 @@ namespace LogViewer
         logWatcher.FileReCreated += OnFileReCreated;
         logWatcher.ReadToEndLine();
         LogsGrid.ItemsSource = logLines;
-        Filter.Text = filterValue;
         gridScrollViewer = GetScrollViewer(LogsGrid);
         LogsGrid.ScrollIntoView(logLines.Last());
 
@@ -300,6 +302,9 @@ namespace LogViewer
 
     private void Files_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
+      var filterValue = Filter.Text;
+      var levelValue = LevelFilter.SelectedValue;
+
       CloseLogFile();
 
       var comboBox = sender as ComboBox;
@@ -329,6 +334,9 @@ namespace LogViewer
 
       openedFileFullPath = selectedItem.FullPath;
       OpenLogFile(openedFileFullPath);
+
+      Filter.Text = filterValue;
+      LevelFilter.SelectedValue = levelValue;
     }
 
     private void OnBlockNewLines(List<string> lines, bool isEndFile, double progress)
