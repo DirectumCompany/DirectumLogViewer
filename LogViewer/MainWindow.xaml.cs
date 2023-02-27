@@ -69,22 +69,31 @@ namespace LogViewer
       SettingsWindow.Load();
 
       if (SettingsWindow.IsFirstRun())
-      {
-        if (SettingsWindow.ShowSettingsDialog() == true)
-          ApplySettings();
-        else
-          Application.Current.Shutdown();
-      }
+        ShowSettingsWindow();
 
       notificationIcon = SaveNotifyLogoFromResource();
 
       var files = FindLogs(SettingsWindow.LogsPath);
+
+      if (files == null)
+      {
+        ShowSettingsWindow();
+        files = FindLogs(SettingsWindow.LogsPath);
+      }
 
       CreateHandlers(files);
 
       InitControls(files);
 
       SetNotificationActivated();
+    }
+
+    private void ShowSettingsWindow()
+    {
+      if (SettingsWindow.ShowSettingsDialog() == true)
+        ApplySettings();
+      else
+        Application.Current.Shutdown();
     }
 
     private Uri SaveNotifyLogoFromResource()
@@ -104,6 +113,9 @@ namespace LogViewer
 
     private string[] FindLogs(string directory)
     {
+      if (!Directory.Exists(directory))
+        return null;
+
       string[] allfiles = Directory.GetFiles(directory, "*.log", SearchOption.AllDirectories);
 
       string machineName = System.Environment.MachineName.ToLower();
