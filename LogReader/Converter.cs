@@ -29,16 +29,6 @@ namespace LogReader
     };
 
     /// <summary>
-    /// Конвертировать json строку лога в текстовый tsv формат.
-    /// </summary>
-    /// <param name="jsonLine">JSON строка лога.</param>
-    /// <returns>Конвертированная строка лога.</returns>
-    public static string ConvertToTsv(string jsonLine)
-    {
-      return TsvFormat(ParseLogLine(jsonLine));
-    }
-
-    /// <summary>
     /// Конвертировать json строку лога в обьект.
     /// </summary>
     /// <param name="jsonLine">JSON строка лога.</param>
@@ -107,7 +97,7 @@ namespace LogReader
       }
       catch (Exception)
       {
-        return new LogLine { Message = jsonLine };
+        return new LogLine { Message = jsonLine, FullMessage = jsonLine };
       }
     }
 
