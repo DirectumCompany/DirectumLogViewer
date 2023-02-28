@@ -14,12 +14,14 @@ namespace LogViewer
     public static string LogsPath { get; set; }
     public static string WhitelistLogs { get; set; }
     public static bool AssociateLogFile { get; set; }
+    public static bool AssociateLogFileChanged { get { return associateLogFileOldValue != AssociateLogFile; }  }
+    private static bool associateLogFileOldValue { get; set; }
 
-    private static readonly string DefaultLogPath = @"D:\Projects\master\Logs";
-    private static readonly string RegKey = @"SOFTWARE\JsonLogViewerSettings";
-    private static readonly string LogsPathKey = "LogsPath";
-    private static readonly string WhitelistKey = "WhiteList";
-    private static readonly string AssociateLogFileKey = "AssociateLogFile";
+    private const string DefaultLogPath = @"D:\Projects\master\Logs";
+    private const string RegKey = @"SOFTWARE\JsonLogViewerSettings";
+    private const string LogsPathKey = "LogsPath";
+    private const string WhitelistKey = "WhiteList";
+    private const string AssociateLogFileKey = "AssociateLogFile";
     private static readonly List<string> DefaultListLogs = new List<string>
     {
       "${machinename}.WebServer.${shortdate}",
@@ -73,6 +75,7 @@ namespace LogViewer
       WhitelistLogs = (string)key.GetValue(WhitelistKey, string.Join("\n", DefaultListLogs));
 
       AssociateLogFile = Convert.ToBoolean(key.GetValue(AssociateLogFileKey, false));
+      associateLogFileOldValue = AssociateLogFile;
 
       key.Close();
     }

@@ -624,10 +624,13 @@ namespace LogViewer
 
     private void ApplySettings()
     {
-      if (SettingsWindow.AssociateLogFile == true)
-        FileAssociations.SetAssociation();
-      else
-        FileAssociations.RemoveAssociation();
+      if (SettingsWindow.AssociateLogFileChanged)
+      {
+        if (SettingsWindow.AssociateLogFile == true)
+          FileAssociations.SetAssociation();
+        else
+          FileAssociations.RemoveAssociation();
+      }
     }
 
     private void SelectFileToOpen(string fileName)

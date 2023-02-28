@@ -47,8 +47,11 @@ namespace LogViewer
     public static void SetAssociation(string extension, string progId, string fileTypeDescription, string applicationFilePath)
     {
       var key = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Explorer\FileExts\" + extension, true);
-      key.DeleteSubKey("UserChoice", false);
-      key.Close();
+      if (key != null)
+      {
+        key.DeleteSubKey("UserChoice", false);
+        key.Close();
+      }
 
       SetKeyDefaultValue(@"Software\Classes\" + extension, progId);
       SetKeyDefaultValue(@"Software\Classes\" + progId, fileTypeDescription);
@@ -84,7 +87,8 @@ namespace LogViewer
           return;
 
         keyroot.GetAccessControl(System.Security.AccessControl.AccessControlSections.All);
-        keyroot.DeleteSubKeyTree(subkey);
+
+        keyroot.DeleteSubKeyTree(subkey, false);
       }
     }
   }
