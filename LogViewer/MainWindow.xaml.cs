@@ -49,7 +49,7 @@ namespace LogViewer
 
     private ObservableCollection<LogLine> filteredLogLines;
 
-    private readonly Uri notificationIcon;
+    private readonly Uri notifyLogo;
 
     private ICollectionView logLinesView;
 
@@ -69,35 +69,56 @@ namespace LogViewer
 
       SettingsWindow.Load();
 
-      if (SettingsWindow.IsFirstRun())
-        ShowSettingsWindow();
+      if (SettingsWindow.IsFirstRun() && !ShowSettingsWindow())
+      {
+        Application.Current.Shutdown();
+        return;
+      }
 
-      notificationIcon = SaveNotifyLogoFromResource();
+      notifyLogo = GetNotifyLogo();
+
+      if (!Directory.Exists(SettingsWindow.LogsPath) && !ShowSettingsWindow())
+      {
+        Application.Current.Shutdown();
+        return;
+      }
 
       var files = FindLogs(SettingsWindow.LogsPath);
 
-      if (files == null)
-      {
-        ShowSettingsWindow();
-        files = FindLogs(SettingsWindow.LogsPath);
-      }
-
-      CreateHandlers(files);
+      if (files != null)
+        CreateHandlers(files);
 
       InitControls(files);
 
       SetNotificationActivated();
     }
 
-    private void ShowSettingsWindow()
+    private void Window_ContentRendered(object sender, EventArgs e)
     {
-      if (SettingsWindow.ShowSettingsDialog() == true)
-        ApplySettings();
-      else
-        Application.Current.Shutdown();
+      this.Title = WindowTitle;
+      gridScrollViewer = GetScrollViewer(LogsGrid);
+
+      var args = Environment.GetCommandLineArgs();
+      if (args.Length > 1)
+      {
+        var fileName = args[1];
+
+        if (File.Exists(fileName) && Path.GetExtension(fileName) == ".log")
+          SelectFileToOpen(fileName);
+      }
     }
 
-    private Uri SaveNotifyLogoFromResource()
+    private bool ShowSettingsWindow()
+    {
+      var result = SettingsWindow.ShowSettingsDialog() == true;
+
+      if (result)
+        ApplySettings();
+
+      return result;
+    }
+
+    private Uri GetNotifyLogo()
     {
       string directory = Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData);
       string imageFilePath = Path.Combine(directory, IconFileName);
@@ -136,7 +157,7 @@ namespace LogViewer
     private void CreateHandlers(string[] files)
     {
       foreach (var file in files)
-        Task.Run(() => logHandlers.Add(new LogHandler(file, notificationIcon)));
+        Task.Run(() => logHandlers.Add(new LogHandler(file, notifyLogo)));
     }
 
     private void InitControls(string[] files)
@@ -152,8 +173,6 @@ namespace LogViewer
       InitLevelFilter();
 
       logLinesView = CollectionViewSource.GetDefaultView(logLines);
-
-
     }
 
     private void InitTenantFilter()
@@ -428,9 +447,8 @@ namespace LogViewer
 
     private void Settins_Click(object sender, RoutedEventArgs e)
     {
-      if (SettingsWindow.ShowSettingsDialog() == true)
+      if (ShowSettingsWindow())
       {
-        ApplySettings();
         // TODO сделать применение настроек без перезапуска приложения.
         MessageBox.Show("Settings will be applied after restarting the application");
         Application.Current.Shutdown();
@@ -625,26 +643,11 @@ namespace LogViewer
       else
       {
         // Создать фоновый обработчик для нового файла.
-        logHandlers.Add(new LogHandler(fileName, notificationIcon));
+        logHandlers.Add(new LogHandler(fileName, notifyLogo));
 
         logFile = new LogFile(fileName);
         LogsFileNames.Items.Insert(LogsFileNames.Items.Count - 1, logFile);
         LogsFileNames.SelectedItem = logFile;
-      }
-    }
-
-    private void Window_ContentRendered(object sender, EventArgs e)
-    {
-      this.Title = WindowTitle;
-      gridScrollViewer = GetScrollViewer(LogsGrid);
-
-      var args = Environment.GetCommandLineArgs();
-      if (args.Length > 1)
-      {
-        var fileName = args[1];
-
-        if (File.Exists(fileName) && Path.GetExtension(fileName) == ".log")
-          SelectFileToOpen(fileName);
       }
     }
 
