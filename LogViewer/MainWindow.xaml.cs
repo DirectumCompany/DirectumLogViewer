@@ -24,31 +24,32 @@ namespace LogViewer
   /// </summary>
   public partial class MainWindow : Window
   {
-    public static readonly string NotificationError = "NotificationError";
+    public const string WindowTitle = "Directum Log Viewer";
 
-    public static readonly string NotificationTypeKey = "Type";
+    public const string NotificationError = "NotificationError";
 
-    public static readonly string NotificationFilePathKey = "FilePath";
+    public const string NotificationTypeKey = "Type";
 
-    public static readonly string NotificationTimeKey = "Time";
+    public const string NotificationFilePathKey = "FilePath";
 
-    public string WindowTitle { get; } = "Directum Log Viewer";
+    public const string NotificationTimeKey = "Time";
 
-    private readonly string OpenAction = "OpenAction";
+    private const string OpenAction = "OpenAction";
 
-    private readonly string All = "All";
+    private const string All = "All";
 
-    private readonly List<LogHandler> LogHandlers = new List<LogHandler>();
+    private const string IconFileName = "horse.png";
+
+    private const int GridUpdatePeriod = 1000;
+
+
+    private readonly List<LogHandler> logHandlers = new List<LogHandler>();
 
     private readonly ObservableCollection<LogLine> logLines = new ObservableCollection<LogLine>();
 
     private ObservableCollection<LogLine> filteredLogLines;
 
     private readonly Uri notificationIcon;
-
-    private readonly string iconFileName = "horse.png";
-
-    private readonly int gridUpdatePeriod = 1000;
 
     private ICollectionView logLinesView;
 
@@ -99,7 +100,7 @@ namespace LogViewer
     private Uri SaveNotifyLogoFromResource()
     {
       string directory = Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData);
-      string imageFilePath = Path.Combine(directory, iconFileName);
+      string imageFilePath = Path.Combine(directory, IconFileName);
 
       if (!File.Exists(imageFilePath))
       {
@@ -135,7 +136,7 @@ namespace LogViewer
     private void CreateHandlers(string[] files)
     {
       foreach (var file in files)
-        Task.Run(() => LogHandlers.Add(new LogHandler(file, notificationIcon)));
+        Task.Run(() => logHandlers.Add(new LogHandler(file, notificationIcon)));
     }
 
     private void InitControls(string[] files)
@@ -151,6 +152,8 @@ namespace LogViewer
       InitLevelFilter();
 
       logLinesView = CollectionViewSource.GetDefaultView(logLines);
+
+
     }
 
     private void InitTenantFilter()
@@ -271,10 +274,9 @@ namespace LogViewer
         logWatcher.FileReCreated += OnFileReCreated;
         logWatcher.ReadToEndLine();
         LogsGrid.ItemsSource = logLines;
-        gridScrollViewer = GetScrollViewer(LogsGrid);
         LogsGrid.ScrollIntoView(logLines.Last());
 
-        logWatcher.StartWatch(gridUpdatePeriod);
+        logWatcher.StartWatch(GridUpdatePeriod);
 
         var tenants = logLines.Where(l => !string.IsNullOrEmpty(l.Tenant)).Select(l => l.Tenant).Distinct().OrderBy(l => l);
 
@@ -422,11 +424,6 @@ namespace LogViewer
           DetailText.Text += line.FullMessage;
         }
       }
-    }
-
-    private void LogsGrid_RequestBringIntoView(object sender, RequestBringIntoViewEventArgs e)
-    {
-      e.Handled = !(e.Source is System.Windows.Controls.DataGridRow);
     }
 
     private void Settins_Click(object sender, RoutedEventArgs e)
@@ -628,7 +625,7 @@ namespace LogViewer
       else
       {
         // Создать фоновый обработчик для нового файла.
-        LogHandlers.Add(new LogHandler(fileName, notificationIcon));
+        logHandlers.Add(new LogHandler(fileName, notificationIcon));
 
         logFile = new LogFile(fileName);
         LogsFileNames.Items.Insert(LogsFileNames.Items.Count - 1, logFile);
@@ -638,6 +635,9 @@ namespace LogViewer
 
     private void Window_ContentRendered(object sender, EventArgs e)
     {
+      this.Title = WindowTitle;
+      gridScrollViewer = GetScrollViewer(LogsGrid);
+
       var args = Environment.GetCommandLineArgs();
       if (args.Length > 1)
       {
@@ -664,6 +664,124 @@ namespace LogViewer
 
       return result;
     }
+
+    #region Убираем авто-скрол при клике по колонке Message или нажатии навигационных кнопок(up/down/pageup/pagedown) на клавиатуре.
+
+    private void LogsGrid_RequestBringIntoView(object sender, RequestBringIntoViewEventArgs e)
+    {
+      e.Handled = !(e.Source is System.Windows.Controls.DataGridRow);
+    }
+
+    private void LogsGrid_PreviewKeyDown(object sender, KeyEventArgs e)
+    {
+      if (gridScrollViewer != null)
+        // Делаем свои обработчики на кнопки.
+        NavigationKeyDown(gridScrollViewer, e);
+    }
+
+    private void NavigationKeyDown(ScrollViewer scrollViewer, KeyEventArgs e)
+    {
+      bool controlDown = ((e.KeyboardDevice.Modifiers & ModifierKeys.Control) != 0);
+      bool altDown = ((e.KeyboardDevice.Modifiers & ModifierKeys.Alt) != 0);
+
+      if (!altDown)
+      {
+        bool invertForRTL = (FlowDirection == FlowDirection.RightToLeft);
+        switch (e.Key)
+        {
+          case Key.Left:
+            if (invertForRTL) scrollViewer.LineRight(); else scrollViewer.LineLeft();
+            e.Handled = true;
+            break;
+
+          case Key.Right:
+            if (invertForRTL) scrollViewer.LineLeft(); else scrollViewer.LineRight();
+            e.Handled = true;
+            break;
+
+          case Key.Up:
+            if (LogsGrid.SelectedIndex != -1)
+            {
+              if (LogsGrid.SelectedIndex > 0)
+                LogsGrid.SelectedItem = LogsGrid.Items[LogsGrid.SelectedIndex - 1];
+
+              LogsGrid.ScrollIntoView(LogsGrid.SelectedItem);
+
+              DataGridRow row = (DataGridRow)LogsGrid.ItemContainerGenerator.ContainerFromIndex(LogsGrid.SelectedIndex);
+              row.MoveFocus(new TraversalRequest(FocusNavigationDirection.Up));
+            }
+            e.Handled = true;
+            break;
+
+          case Key.Down:
+            if (LogsGrid.SelectedIndex != -1)
+            {
+              if (LogsGrid.SelectedIndex + 1 < LogsGrid.Items.Count)
+                LogsGrid.SelectedItem = LogsGrid.Items[LogsGrid.SelectedIndex + 1];
+
+              LogsGrid.ScrollIntoView(LogsGrid.SelectedItem);
+
+              DataGridRow row = (DataGridRow)LogsGrid.ItemContainerGenerator.ContainerFromIndex(LogsGrid.SelectedIndex);
+              row.MoveFocus(new TraversalRequest(FocusNavigationDirection.Down));
+            }
+            e.Handled = true;
+            break;
+
+          case Key.PageUp:
+          case Key.PageDown:
+            OnPageUpOrDownKeyDown(scrollViewer, e);
+            break;
+
+          case Key.Home:
+            if (controlDown)
+            {
+              scrollViewer.ScrollToTop();
+
+              if (LogsGrid.Items.Count > 0)
+                LogsGrid.SelectedItem = LogsGrid.Items[0];
+            }
+            else scrollViewer.ScrollToLeftEnd();
+            e.Handled = true;
+            break;
+
+          case Key.End:
+            if (controlDown)
+            {
+              scrollViewer.ScrollToBottom();
+
+              if (LogsGrid.Items.Count > 0)
+                LogsGrid.SelectedItem = LogsGrid.Items[LogsGrid.Items.Count - 1];
+            }
+            else scrollViewer.ScrollToRightEnd();
+            e.Handled = true;
+            break;
+        }
+      }
+    }
+
+    private void OnPageUpOrDownKeyDown(ScrollViewer scrollHost, KeyEventArgs e)
+    {
+      if (scrollHost != null)
+      {
+        e.Handled = true;
+
+        int rowIndex = LogsGrid.SelectedIndex;
+        if (rowIndex >= 0)
+        {
+          int jumpDistance = Math.Max(1, (int)scrollHost.ViewportHeight - 1);
+          int targetIndex = (e.Key == Key.PageUp) ? rowIndex - jumpDistance : rowIndex + jumpDistance;
+          targetIndex = Math.Max(0, Math.Min(targetIndex, LogsGrid.Items.Count - 1));
+
+          LogsGrid.SelectedItem = LogsGrid.Items[targetIndex];
+          LogsGrid.ScrollIntoView(LogsGrid.SelectedItem);
+
+          FocusNavigationDirection direction = e.Key == Key.PageUp ? FocusNavigationDirection.Up : FocusNavigationDirection.Down;
+          DataGridRow row = (DataGridRow)LogsGrid.ItemContainerGenerator.ContainerFromIndex(LogsGrid.SelectedIndex);
+          row.MoveFocus(new TraversalRequest(direction));
+        }
+      }
+    }
+    #endregion
 
   }
 }

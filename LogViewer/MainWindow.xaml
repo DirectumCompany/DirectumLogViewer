@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:LogViewer"
         xmlns:tb="http://www.hardcodet.net/taskbar"
         mc:Ignorable="d"
-        Title="{Binding WindowTitle}" Height="650" Width="1024" SizeToContent="Manual" WindowStartupLocation="CenterScreen" WindowState="Maximized" ContentRendered="Window_ContentRendered">
+        Height="650" Width="1024" SizeToContent="Manual" WindowStartupLocation="CenterScreen" WindowState="Maximized" ContentRendered="Window_ContentRendered">
 
     <Window.Resources>
         <Style x:Key="placeHolder" TargetType="{x:Type TextBox}" BasedOn="{StaticResource {x:Type TextBox}}">
@@ -118,7 +118,7 @@
               
         </Grid>
 
-        <DataGrid x:Name="LogsGrid" Grid.Row="1" AutoGenerateColumns="False" HorizontalGridLinesBrush="#FFC7C7C7" GridLinesVisibility="Horizontal" Margin="0,0,0,0" SelectionMode="Extended" RowHeight="20" SelectionChanged="LogsGrid_SelectionChanged" CanUserAddRows="false" >
+        <DataGrid x:Name="LogsGrid" Grid.Row="1" AutoGenerateColumns="False" HorizontalGridLinesBrush="#FFC7C7C7" GridLinesVisibility="Horizontal" Margin="0,0,0,0" SelectionMode="Extended" RowHeight="20" SelectionChanged="LogsGrid_SelectionChanged" CanUserAddRows="false" CanUserDeleteRows="False" SelectionUnit="FullRow" >
 
             <DataGrid.CellStyle>
                 <Style TargetType="{x:Type DataGridCell}">
@@ -145,7 +145,8 @@
 
             <DataGrid.RowStyle>
                 <Style TargetType="{x:Type DataGridRow}">
-                    <EventSetter Event="Control.RequestBringIntoView" Handler="LogsGrid_RequestBringIntoView"  />
+                    <EventSetter Event="Control.RequestBringIntoView" Handler="LogsGrid_RequestBringIntoView"/>
+                    <EventSetter Event="PreviewKeyDown" Handler="LogsGrid_PreviewKeyDown"/>
                 </Style>
             </DataGrid.RowStyle>
 
