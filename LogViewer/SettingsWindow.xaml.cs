@@ -1,4 +1,4 @@
-﻿using Microsoft.Win32;
+using Microsoft.Win32;
 using Microsoft.WindowsAPICodePack.Dialogs;
 using System;
 using System.Collections.Generic;
@@ -16,12 +16,14 @@ namespace LogViewer
     public static bool AssociateLogFile { get; set; }
     public static bool AssociateLogFileChanged { get { return associateLogFileOldValue != AssociateLogFile; }  }
     private static bool associateLogFileOldValue { get; set; }
+    public static bool UseBackgroundNotification { get; set; }
 
     private const string DefaultLogPath = @"D:\Projects\master\Logs";
     private const string RegKey = @"SOFTWARE\JsonLogViewerSettings";
     private const string LogsPathKey = "LogsPath";
     private const string WhitelistKey = "WhiteList";
     private const string AssociateLogFileKey = "AssociateLogFile";
+    private const string UseBackgroundNotificationKey = "UseBackgroundNotification";
     private static readonly List<string> DefaultListLogs = new List<string>
     {
       "${machinename}.WebServer.${shortdate}",
@@ -60,6 +62,7 @@ namespace LogViewer
         key.SetValue(LogsPathKey, dialog.LogsPathTextBox.Text);
         key.SetValue(WhitelistKey, dialog.WhiteListTextBox.Text);
         key.SetValue(AssociateLogFileKey, dialog.AssociateLogFileCheckBox.IsChecked);
+        key.SetValue(UseBackgroundNotificationKey, dialog.UseBackgroundNotificationCheckBox.IsChecked);
         key.Close();
       }
 
@@ -76,6 +79,8 @@ namespace LogViewer
 
       AssociateLogFile = Convert.ToBoolean(key.GetValue(AssociateLogFileKey, false));
       associateLogFileOldValue = AssociateLogFile;
+
+      UseBackgroundNotification = Convert.ToBoolean(key.GetValue(UseBackgroundNotificationKey, false));
 
       key.Close();
     }
