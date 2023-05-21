@@ -1,4 +1,4 @@
-﻿<Window x:Class="LogViewer.MainWindow"
+<Window x:Class="LogViewer.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -75,6 +75,8 @@
                 <ColumnDefinition Width="auto" />
                 <ColumnDefinition Width="auto" />
                 <ColumnDefinition Width="auto" />
+                <ColumnDefinition Width="auto" />
+                <ColumnDefinition Width="auto" />
             </Grid.ColumnDefinitions>
             <ComboBox x:Name="LogsFileNames" Grid.Column="0" ItemsSource="{Binding}" HorizontalAlignment="Left"  VerticalAlignment="Center" Width="305" Height="25" Margin="0,0,0,0" FontSize="14" DisplayMemberPath="Name" SelectionChanged="Files_SelectionChanged">
             </ComboBox>
@@ -88,7 +90,11 @@
 
             <TextBox x:Name="Filter" Grid.Column="5" HorizontalAlignment="Stretch" Style="{StaticResource placeHolder}" Tag="Filter.." Text="" TextWrapping="Wrap" VerticalAlignment="Center" Height="25" FontSize="14" FontStyle="Normal" Margin="5,0,0,0" TextChanged="Filter_TextChanged"/>
 
-            <ToggleButton x:Name="ColumnVisibilityToggleBtn" Grid.Column="6" Width="25" Height="25" Margin="5,0,0,0" Checked = "ColumnVisibilityCheck" Unchecked = "ColumnVisibilityUnchecked" HorizontalAlignment="Right">
+            <Label Grid.Column="6" Content="Regex" FontStyle="Normal" FontSize="14" VerticalAlignment="Top" Margin="5,0,0,0"/>
+            <CheckBox Grid.Column="7" x:Name="UseRegex" HorizontalAlignment="Left"  IsChecked="False" VerticalAlignment="Center" FontStyle="Normal" Height="24" FontSize="14" Checked="UseRegex_Checked" Unchecked="UseRegex_Unchecked"/>
+
+
+            <ToggleButton x:Name="ColumnVisibilityToggleBtn" Grid.Column="8" Width="25" Height="25" Margin="5,0,0,0" Checked = "ColumnVisibilityCheck" Unchecked = "ColumnVisibilityUnchecked" HorizontalAlignment="Right">
                 <ToggleButton.Style>
                     <Style TargetType="{x:Type ToggleButton}">
                         <Style.Triggers>
@@ -104,13 +110,13 @@
                 </ToggleButton.Style>
             </ToggleButton>
             
-            <Button Grid.Column="7" Width="25" Height="25" Margin="5,0,0,0" HorizontalAlignment="Right" Command="{StaticResource SearchTextCommand}" >
+            <Button Grid.Column="9" Width="25" Height="25" Margin="5,0,0,0" HorizontalAlignment="Right" Command="{StaticResource SearchTextCommand}" >
                 <DockPanel>
                     <Image Source="Resources/find.png"/>
                 </DockPanel>
             </Button>
 
-            <Button Grid.Column="8" Width="25" Height="25" Margin="5,0,0,0" HorizontalAlignment="Right" Click="Settins_Click" >
+            <Button Grid.Column="10" Width="25" Height="25" Margin="5,0,0,0" HorizontalAlignment="Right" Click="Settins_Click" >
                 <DockPanel>
                     <Image Source="Resources/settings.png"/>
                 </DockPanel>
