@@ -335,7 +335,10 @@ namespace LogViewer
 
       LogFile selectedItem = comboBox.SelectedItem as LogFile;
       if (selectedItem == null)
+      {
+        this.TrayInfo.ToolTipText = this.SetToolTipText(string.Empty);
         return;
+      }
 
       if (selectedItem.FullPath == OpenAction)
       {
@@ -349,7 +352,10 @@ namespace LogViewer
         if (CommonFileDialogResult.Ok == dialog.ShowDialog())
           SelectFileToOpen(dialog.FileName);
         else
+        {
           comboBox.SelectedItem = null;
+          this.TrayInfo.ToolTipText = this.SetToolTipText(string.Empty);
+        }
 
         return;
       }
@@ -360,7 +366,16 @@ namespace LogViewer
       OpenLogFile(openedFileFullPath);
 
       Filter.Text = filterValue;
+      this.TrayInfo.ToolTipText = this.SetToolTipText(selectedItem.Name);
       LevelFilter.SelectedValue = levelValue;
+    }
+
+    private string SetToolTipText(string filename)
+    {
+      if (filename == string.Empty)
+        return "Directum Log Viewer";
+      else
+        return string.Format("Directum Log Viewer - {0}", filename);
     }
 
     private void OnBlockNewLines(List<string> lines, bool isEndFile, double progress)
@@ -461,6 +476,13 @@ namespace LogViewer
     private void Exit_Click(object sender, RoutedEventArgs e)
     {
       Application.Current.Shutdown();
+    }
+
+    protected override void OnClosing(CancelEventArgs e)
+    {
+      e.Cancel = true;
+      this.Hide();
+      base.OnClosing(e);
     }
 
     private void TaskbarIcon_TrayLeftMouseUp(object sender, RoutedEventArgs e)

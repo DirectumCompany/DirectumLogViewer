@@ -17,6 +17,7 @@ namespace LogViewer
     public static bool AssociateLogFileChanged { get { return associateLogFileOldValue != AssociateLogFile; }  }
     private static bool associateLogFileOldValue { get; set; }
     public static bool UseBackgroundNotification { get; set; }
+    public static bool CloseToTray { get; set; }
 
     private const string DefaultLogPath = @"D:\Projects\master\Logs";
     private const string RegKey = @"SOFTWARE\JsonLogViewerSettings";
@@ -24,6 +25,7 @@ namespace LogViewer
     private const string WhitelistKey = "WhiteList";
     private const string AssociateLogFileKey = "AssociateLogFile";
     private const string UseBackgroundNotificationKey = "UseBackgroundNotification";
+    private const string CloseToTrayKey = "CloseToTray";
     private static readonly List<string> DefaultListLogs = new List<string>
     {
       "${machinename}.WebServer.${shortdate}",
@@ -63,6 +65,7 @@ namespace LogViewer
         key.SetValue(WhitelistKey, dialog.WhiteListTextBox.Text);
         key.SetValue(AssociateLogFileKey, dialog.AssociateLogFileCheckBox.IsChecked);
         key.SetValue(UseBackgroundNotificationKey, dialog.UseBackgroundNotificationCheckBox.IsChecked);
+        key.SetValue(CloseToTrayKey, dialog.CloseToTrayCheckBox.IsChecked);
         key.Close();
       }
 
