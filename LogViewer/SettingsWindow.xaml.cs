@@ -85,6 +85,8 @@ namespace LogViewer
 
       UseBackgroundNotification = Convert.ToBoolean(key.GetValue(UseBackgroundNotificationKey, false));
 
+      CloseToTray = Convert.ToBoolean(key.GetValue(CloseToTrayKey, false));
+
       key.Close();
     }
 
