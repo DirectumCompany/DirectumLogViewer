@@ -72,6 +72,7 @@
                 <ColumnDefinition Width="auto" />
                 <ColumnDefinition Width="auto" />
                 <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="auto" />
                 <ColumnDefinition Width="auto" />
                 <ColumnDefinition Width="auto" />
@@ -88,13 +89,14 @@
             <ComboBox Grid.Column="4" x:Name="LevelFilter" HorizontalAlignment="Left"  VerticalAlignment="Center" FontStyle="Normal" Width="150" Height="24" FontSize="14" SelectionChanged="FilterLevel_SelectionChanged"/>
 
 
-            <TextBox x:Name="Filter" Grid.Column="5" HorizontalAlignment="Stretch" Style="{StaticResource placeHolder}" Tag="Filter.." Text="" TextWrapping="Wrap" VerticalAlignment="Center" Height="25" FontSize="14" FontStyle="Normal" Margin="5,0,0,0" TextChanged="Filter_TextChanged"/>
+            <TextBox x:Name="Filter" Grid.Column="5" HorizontalAlignment="Stretch" Style="{StaticResource placeHolder}" Tag="Include filter.." Text="" TextWrapping="Wrap" VerticalAlignment="Center" Height="25" FontSize="14" FontStyle="Normal" Margin="5,0,0,0" TextChanged="Filter_TextChanged"/>
+            <TextBox x:Name="ExcludeFilter" Grid.Column="6" HorizontalAlignment="Stretch" Style="{StaticResource placeHolder}" Tag="Exclude filter.." Text="" TextWrapping="Wrap" VerticalAlignment="Center" Height="25" FontSize="14" FontStyle="Normal" Margin="5,0,0,0" TextChanged="ExcludeFilter_TextChanged"/>
 
-            <Label Grid.Column="6" Content="Regex" FontStyle="Normal" FontSize="14" VerticalAlignment="Top" Margin="5,0,0,0"/>
-            <CheckBox Grid.Column="7" x:Name="UseRegex" HorizontalAlignment="Left"  IsChecked="False" VerticalAlignment="Center" FontStyle="Normal" Height="24" FontSize="14" Checked="UseRegex_Checked" Unchecked="UseRegex_Unchecked"/>
+            <Label Grid.Column="7" Content="Regex" FontStyle="Normal" FontSize="14" VerticalAlignment="Top" Margin="5,0,0,0"/>
+            <CheckBox Grid.Column="8" x:Name="UseRegex" HorizontalAlignment="Left"  IsChecked="False" VerticalAlignment="Center" FontStyle="Normal" Height="24" FontSize="14" Checked="UseRegex_Checked" Unchecked="UseRegex_Unchecked"/>
 
 
-            <ToggleButton x:Name="ColumnVisibilityToggleBtn" Grid.Column="8" Width="25" Height="25" Margin="5,0,0,0" Checked = "ColumnVisibilityCheck" Unchecked = "ColumnVisibilityUnchecked" HorizontalAlignment="Right">
+            <ToggleButton x:Name="ColumnVisibilityToggleBtn" Grid.Column="9" Width="25" Height="25" Margin="5,0,0,0" Checked = "ColumnVisibilityCheck" Unchecked = "ColumnVisibilityUnchecked" HorizontalAlignment="Right">
                 <ToggleButton.Style>
                     <Style TargetType="{x:Type ToggleButton}">
                         <Style.Triggers>
@@ -110,13 +112,13 @@
                 </ToggleButton.Style>
             </ToggleButton>
             
-            <Button Grid.Column="9" Width="25" Height="25" Margin="5,0,0,0" HorizontalAlignment="Right" Command="{StaticResource SearchTextCommand}" >
+            <Button Grid.Column="10" Width="25" Height="25" Margin="5,0,0,0" HorizontalAlignment="Right" Command="{StaticResource SearchTextCommand}" >
                 <DockPanel>
                     <Image Source="Resources/find.png"/>
                 </DockPanel>
             </Button>
 
-            <Button Grid.Column="10" Width="25" Height="25" Margin="5,0,0,0" HorizontalAlignment="Right" Click="Settins_Click" >
+            <Button Grid.Column="11" Width="25" Height="25" Margin="5,0,0,0" HorizontalAlignment="Right" Click="Settins_Click" >
                 <DockPanel>
                     <Image Source="Resources/settings.png"/>
                 </DockPanel>
