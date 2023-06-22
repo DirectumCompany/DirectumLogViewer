@@ -1,4 +1,4 @@
-﻿using LogReader;
+using LogReader;
 using Microsoft.Toolkit.Uwp.Notifications;
 using Microsoft.WindowsAPICodePack.Dialogs;
 using System;
@@ -198,58 +198,61 @@ namespace LogViewer
 
     private void SetNotificationActivated()
     {
-      ToastNotificationManagerCompat.OnActivated += toastArgs =>
+      if (SettingsWindow.UseBackgroundNotification)
       {
-        ToastArguments args = ToastArguments.Parse(toastArgs.Argument);
-
-        var type = string.Empty;
-        args.TryGetValue(NotificationTypeKey, out type);
-
-        if (type == NotificationError)
+        ToastNotificationManagerCompat.OnActivated += toastArgs =>
         {
-          var filePath = string.Empty;
-          args.TryGetValue(NotificationFilePathKey, out filePath);
+          ToastArguments args = ToastArguments.Parse(toastArgs.Argument);
 
-          var time = string.Empty;
-          args.TryGetValue(NotificationTimeKey, out time);
+          var type = string.Empty;
+          args.TryGetValue(NotificationTypeKey, out type);
 
-          Application.Current.Dispatcher.Invoke(delegate
+          if (type == NotificationError)
           {
-            if (!LogsFileNames.IsEnabled)
-              return;
+            var filePath = string.Empty;
+            args.TryGetValue(NotificationFilePathKey, out filePath);
 
-            var selectedLog = (LogFile)LogsFileNames.SelectedItem;
+            var time = string.Empty;
+            args.TryGetValue(NotificationTimeKey, out time);
 
-            if (selectedLog == null || selectedLog.FullPath.ToLower() != filePath.ToLower())
+            Application.Current.Dispatcher.Invoke(delegate
             {
-              var logWithError = LogsFileNames.Items.Cast<LogFile>().FirstOrDefault(i => i.FullPath.ToLower() == filePath.ToLower());
-
-              if (logWithError == null)
+              if (!LogsFileNames.IsEnabled)
                 return;
 
-              LogsFileNames.SelectedItem = logWithError;
-            }
+              var selectedLog = (LogFile)LogsFileNames.SelectedItem;
 
-            var dt = new DateTime(long.Parse(time));
-            var itemWithError = logLines.FirstOrDefault(i => i.Level == LogHandler.LogLevelError && i.Time == dt);
-            if (itemWithError != null)
-            {
-              BringToForeground();
+              if (selectedLog == null || selectedLog.FullPath.ToLower() != filePath.ToLower())
+              {
+                var logWithError = LogsFileNames.Items.Cast<LogFile>().FirstOrDefault(i => i.FullPath.ToLower() == filePath.ToLower());
 
-              if (!string.IsNullOrEmpty(Filter.Text))
-                Filter.Text = null;
+                if (logWithError == null)
+                  return;
 
-              if (LevelFilter.SelectedValue != All)
-                LevelFilter.SelectedValue = All;
+                LogsFileNames.SelectedItem = logWithError;
+              }
 
-              SetFilter(string.Empty, All, All);
-              LogsGrid.SelectedItem = itemWithError;
-              LogsGrid.ScrollIntoView(itemWithError);
-              Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.ApplicationIdle, new Action(() => LogsGrid.Focus()));
-            }
-          });
-        }
-      };
+              var dt = new DateTime(long.Parse(time));
+              var itemWithError = logLines.FirstOrDefault(i => i.Level == LogHandler.LogLevelError && i.Time == dt);
+              if (itemWithError != null)
+              {
+                BringToForeground();
+
+                if (!string.IsNullOrEmpty(Filter.Text))
+                  Filter.Text = null;
+
+                if (LevelFilter.SelectedValue != All)
+                  LevelFilter.SelectedValue = All;
+
+                SetFilter(string.Empty, All, All);
+                LogsGrid.SelectedItem = itemWithError;
+                LogsGrid.ScrollIntoView(itemWithError);
+                Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.ApplicationIdle, new Action(() => LogsGrid.Focus()));
+              }
+            });
+          }
+        };
+      }
     }
 
     private void CloseLogFile()
@@ -646,7 +649,8 @@ namespace LogViewer
       else
       {
         // Создать фоновый обработчик для нового файла.
-        logHandlers.Add(new LogHandler(fileName, notifyLogo));
+        if (SettingsWindow.UseBackgroundNotification)
+          logHandlers.Add(new LogHandler(fileName, notifyLogo));
 
         logFile = new LogFile(fileName);
         LogsFileNames.Items.Insert(LogsFileNames.Items.Count - 1, logFile);
