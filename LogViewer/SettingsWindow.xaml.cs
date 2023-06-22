@@ -2,6 +2,7 @@ using Microsoft.Win32;
 using Microsoft.WindowsAPICodePack.Dialogs;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Windows;
 
 namespace LogViewer
@@ -14,11 +15,13 @@ namespace LogViewer
     public static string LogsPath { get; set; }
     public static string WhitelistLogs { get; set; }
     public static bool AssociateLogFile { get; set; }
-    public static bool AssociateLogFileChanged { get { return associateLogFileOldValue != AssociateLogFile; }  }
+    public static bool AssociateLogFileChanged { get { return associateLogFileOldValue != AssociateLogFile; } }
     private static bool associateLogFileOldValue { get; set; }
     public static bool UseBackgroundNotification { get; set; }
 
     private const string DefaultLogPath = @"D:\Projects\master\Logs";
+    private const string IISDefaultLogPath = @"C:\inetpub\logs";
+
     private const string RegKey = @"SOFTWARE\JsonLogViewerSettings";
     private const string LogsPathKey = "LogsPath";
     private const string WhitelistKey = "WhiteList";
@@ -73,7 +76,7 @@ namespace LogViewer
     {
       using RegistryKey key = Registry.CurrentUser.CreateSubKey(RegKey);
 
-      LogsPath = (string)key.GetValue(LogsPathKey, DefaultLogPath);
+      LogsPath = (string)key.GetValue(LogsPathKey, GetDefaultLogPath());
 
       WhitelistLogs = (string)key.GetValue(WhitelistKey, string.Join("\n", DefaultListLogs));
 
@@ -85,11 +88,21 @@ namespace LogViewer
       key.Close();
     }
 
+    private static string GetDefaultLogPath()
+    {
+      if (Directory.Exists(DefaultLogPath))
+        return DefaultLogPath;
+      else if (Directory.Exists(IISDefaultLogPath))
+        return IISDefaultLogPath;
+      else
+        return string.Empty;
+    }
+
     private void Accept_Click(object sender, RoutedEventArgs e)
     {
       if (!System.IO.Directory.Exists(LogsPathTextBox.Text))
       {
-        MessageBox.Show($"Directory '{LogsPathTextBox.Text}' not exist", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+        MessageBox.Show($"Path to logs '{LogsPathTextBox.Text}' not exist", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
         return;
       }
 
