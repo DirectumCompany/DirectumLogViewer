@@ -16,6 +16,7 @@ using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
+using System.Text.RegularExpressions;
 
 namespace LogViewer
 {
@@ -243,7 +244,7 @@ namespace LogViewer
               if (LevelFilter.SelectedValue != All)
                 LevelFilter.SelectedValue = All;
 
-              SetFilter(string.Empty, All, All);
+              SetFilter(string.Empty, string.Empty, All, All);
               LogsGrid.SelectedItem = itemWithError;
               LogsGrid.ScrollIntoView(itemWithError);
               Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.ApplicationIdle, new Action(() => LogsGrid.Focus()));
@@ -390,7 +391,7 @@ namespace LogViewer
               var tenant = TenantFilter.SelectedValue as string;
               var level = LevelFilter.SelectedValue as string;
 
-              if (NeedShowLine(logLine, Filter.Text, tenant, level))
+              if (NeedShowLine(logLine, Filter.Text, ExcludeFilter.Text, tenant, level))
                 filteredLogLines.Add(logLine);
             }
           }
@@ -491,28 +492,74 @@ namespace LogViewer
       {
         var tenant = TenantFilter.SelectedValue as string;
         var level = LevelFilter.SelectedValue as string;
-        SetFilter(tb.Text, tenant, level);
+        SetFilter(tb.Text, ExcludeFilter.Text, tenant, level);
       }
     }
 
-    private bool NeedShowLine(LogLine line, string text, string tenant, string level)
+    private async void ExcludeFilter_TextChanged(object sender, TextChangedEventArgs e)
+    {
+      TextBox tb = (TextBox)sender;
+      int startLength = tb.Text.Length;
+
+      await Task.Delay(1500);
+
+      if (startLength == tb.Text.Length && tb.IsEnabled && e.UndoAction != UndoAction.Clear)
+      {
+        var tenant = TenantFilter.SelectedValue as string;
+        var level = LevelFilter.SelectedValue as string;
+        SetFilter(Filter.Text, tb.Text, tenant, level);
+      }
+    }
+
+    private bool NeedShowLine(LogLine line, string includeFilter, string excludeFilter, string tenant, string level)
     {
       var result = true;
 
-      if (!string.IsNullOrEmpty(text))
+      if (!string.IsNullOrEmpty(excludeFilter))
       {
-        result = (!string.IsNullOrEmpty(line.FullMessage) && line.FullMessage.IndexOf(text, StringComparison.OrdinalIgnoreCase) > -1) ||
-          (!string.IsNullOrEmpty(line.Trace) && line.Trace.IndexOf(text, StringComparison.OrdinalIgnoreCase) > -1) ||
-          (!string.IsNullOrEmpty(line.Pid) && line.Pid.IndexOf(text, StringComparison.OrdinalIgnoreCase) > -1) ||
-          (!string.IsNullOrEmpty(line.Level) && line.Level.IndexOf(text, StringComparison.OrdinalIgnoreCase) > -1);
+        try
+        {
+          Regex regex = new Regex(excludeFilter, RegexOptions.IgnoreCase | RegexOptions.Singleline);
+          if (this.UseRegex.IsChecked.Value)
+            result = !string.IsNullOrEmpty(line.FullMessage) && regex.IsMatch(line.FullMessage);
+          else
+            result = !string.IsNullOrEmpty(line.FullMessage) && line.FullMessage.IndexOf(excludeFilter, StringComparison.OrdinalIgnoreCase) > -1;
+          result = result || (!string.IsNullOrEmpty(line.Trace) && line.Trace.IndexOf(excludeFilter, StringComparison.OrdinalIgnoreCase) > -1) ||
+                             (!string.IsNullOrEmpty(line.Pid) && line.Pid.IndexOf(excludeFilter, StringComparison.OrdinalIgnoreCase) > -1) ||
+                             (!string.IsNullOrEmpty(line.Level) && line.Level.IndexOf(excludeFilter, StringComparison.OrdinalIgnoreCase) > -1);
+          result = !result;
+        }
+        catch (RegexParseException)
+        {
+          result = false;
+        }
       }
 
-      if (!string.IsNullOrEmpty(tenant) && !string.Equals(tenant, All, StringComparison.InvariantCultureIgnoreCase))
+      if (result && !string.IsNullOrEmpty(includeFilter))
+      {
+        try
+        {
+          Regex regex = new Regex(includeFilter, RegexOptions.IgnoreCase | RegexOptions.Singleline);
+          if (this.UseRegex.IsChecked.Value)
+            result = !string.IsNullOrEmpty(line.FullMessage) && regex.IsMatch(line.FullMessage);
+          else
+            result = !string.IsNullOrEmpty(line.FullMessage) && line.FullMessage.IndexOf(includeFilter, StringComparison.OrdinalIgnoreCase) > -1;
+          result = result || (!string.IsNullOrEmpty(line.Trace) && line.Trace.IndexOf(includeFilter, StringComparison.OrdinalIgnoreCase) > -1) ||
+                             (!string.IsNullOrEmpty(line.Pid) && line.Pid.IndexOf(includeFilter, StringComparison.OrdinalIgnoreCase) > -1) ||
+                             (!string.IsNullOrEmpty(line.Level) && line.Level.IndexOf(includeFilter, StringComparison.OrdinalIgnoreCase) > -1);
+        }
+        catch (RegexParseException)
+        {
+          result = false;
+        }
+      }
+
+      if (result && !string.IsNullOrEmpty(tenant) && !string.Equals(tenant, All, StringComparison.InvariantCultureIgnoreCase))
       {
         result = result && string.Equals(line.Tenant, tenant, StringComparison.InvariantCultureIgnoreCase);
       }
 
-      if (!string.IsNullOrEmpty(level) && !string.Equals(level, All, StringComparison.InvariantCultureIgnoreCase))
+      if (result && !string.IsNullOrEmpty(level) && !string.Equals(level, All, StringComparison.InvariantCultureIgnoreCase))
       {
         result = result && line.Level != null && string.Equals(line.Level, level, StringComparison.InvariantCultureIgnoreCase);
       }
@@ -520,18 +567,19 @@ namespace LogViewer
       return result;
     }
 
-    private void SetFilter(string text, string tenant, string level)
+    private void SetFilter(string includeFilter, string excludeFilter, string tenant, string level)
     {
       if (logLinesView == null)
         return;
 
-      var needFilter = !String.IsNullOrEmpty(text) ||
-        (!String.Equals(tenant, All) && !String.IsNullOrEmpty(tenant)) ||
-        (!String.Equals(level, All) && !String.IsNullOrEmpty(level));
+      var needFilter = !String.IsNullOrEmpty(includeFilter) ||
+                       !String.IsNullOrEmpty(excludeFilter) ||
+                       (!String.Equals(tenant, All) && !String.IsNullOrEmpty(tenant)) ||
+                       (!String.Equals(level, All) && !String.IsNullOrEmpty(level));
 
       if (needFilter)
       {
-        filteredLogLines = new ObservableCollection<LogLine>(logLines.Where(l => NeedShowLine(l, text, tenant, level)));
+        filteredLogLines = new ObservableCollection<LogLine>(logLines.Where(l => NeedShowLine(l, includeFilter, excludeFilter, tenant, level)));
         LogsGrid.ItemsSource = filteredLogLines;
       }
       else
@@ -571,7 +619,7 @@ namespace LogViewer
         var tenant = TenantFilter.SelectedValue as string;
         var level = LevelFilter.SelectedValue as string;
 
-        SearchGrid.ItemsSource = logLines.Where(l => NeedShowLine(l, dialog.SearchText.Text, tenant, level)).ToList();
+        SearchGrid.ItemsSource = logLines.Where(l => NeedShowLine(l, dialog.SearchText.Text, string.Empty, tenant, level)).ToList();
         BottomTabControl.SelectedItem = SearchTab;
       }
     }
@@ -593,7 +641,7 @@ namespace LogViewer
       if (tenant != null)
       {
         var level = LevelFilter.SelectedValue as string;
-        SetFilter(Filter.Text, tenant, level);
+        SetFilter(Filter.Text, ExcludeFilter.Text, tenant, level);
       }
     }
 
@@ -604,7 +652,7 @@ namespace LogViewer
       if (level != null)
       {
         var tenant = TenantFilter.SelectedValue as string;
-        SetFilter(Filter.Text, tenant, level);
+        SetFilter(Filter.Text, ExcludeFilter.Text, tenant, level);
       }
     }
     private void ColumnVisibilityCheck(object sender, RoutedEventArgs e)
@@ -790,6 +838,26 @@ namespace LogViewer
       }
     }
     #endregion
+
+    private void UseRegex_Changed()
+    {
+      int startLength = this.Filter.Text.Length;
+      if (startLength == this.Filter.Text.Length && this.Filter.IsEnabled)
+      {
+        var tenant = this.TenantFilter.SelectedValue as string;
+        var level = this.LevelFilter.SelectedValue as string;
+        this.SetFilter(this.Filter.Text, this.ExcludeFilter.Text, tenant, level);
+      }
+    }
+    private void UseRegex_Checked(object sender, RoutedEventArgs e)
+    {
+      this.UseRegex_Changed();
+    }
+
+    private void UseRegex_Unchecked(object sender, RoutedEventArgs e)
+    {
+      this.UseRegex_Changed();
+    }
 
   }
 }
