@@ -10,7 +10,7 @@ namespace LogReader
   /// </summary>
   public class LogWatcher : IDisposable
   {
-    public bool IsStartedWatching { get => timer != null; }
+    public bool IsWatching { get; private set; }
 
     public delegate void BlockNewLinesHandler(List<string> lines, bool isEndFile, double progress);
     public event BlockNewLinesHandler BlockNewLines;
@@ -35,8 +35,10 @@ namespace LogReader
 
     public void StartWatch(int period)
     {
-      if (timer != null)
-        throw new Exception("Already started watching");
+      if (IsWatching)
+        throw new Exception("Log file already watching");
+
+      IsWatching = true;
 
       timer = new Timer();
       timer.AutoReset = false;
@@ -81,6 +83,18 @@ namespace LogReader
       }
     }
 
+    private void OnTimedEvent(Object source, ElapsedEventArgs e)
+    {
+      ReadToEndLine();
+      timer.Start();
+    }
+
+    private void InvokeBlockNewLinesEvent(List<string> lines)
+    {
+      var progress = fileLength == 0 ? 100 : 100 * streamReader.BaseStream.Position / fileLength;
+      BlockNewLines?.Invoke(lines, streamReader.Peek() == -1, progress);
+    }
+
     public void Dispose()
     {
       if (timer != null)
@@ -100,18 +114,6 @@ namespace LogReader
         fileStream.Dispose();
         fileStream = null;
       }
-    }
-
-    private void OnTimedEvent(Object source, ElapsedEventArgs e)
-    {
-      ReadToEndLine();
-      timer.Start();
-    }
-
-    private void InvokeBlockNewLinesEvent(List<string> lines)
-    {
-      var progress = fileLength == 0 ? 100 : 100 * streamReader.BaseStream.Position / fileLength;
-      BlockNewLines?.Invoke(lines, streamReader.Peek() == -1, progress);
     }
 
   }

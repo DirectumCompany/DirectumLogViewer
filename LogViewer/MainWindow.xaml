@@ -132,6 +132,10 @@
                             <Setter Property="Foreground" Value="Blue" />
                         </DataTrigger>
 
+                        <DataTrigger Binding="{Binding Level}" Value="Warn">
+                            <Setter Property="Foreground" Value="#FFEC5600" />
+                        </DataTrigger>
+
                         <Trigger Property="IsSelected" Value="True">
                             <Setter Property="BorderThickness" Value="0"/>
                         </Trigger>

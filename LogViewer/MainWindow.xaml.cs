@@ -75,22 +75,23 @@ namespace LogViewer
         return;
       }
 
-      notifyLogo = GetNotifyLogo();
-
       if (!Directory.Exists(SettingsWindow.LogsPath) && !ShowSettingsWindow())
       {
         Application.Current.Shutdown();
         return;
       }
 
+      notifyLogo = GetNotifyLogo();
+
       var files = FindLogs(SettingsWindow.LogsPath);
 
-      if (files != null)
+      if (files != null && SettingsWindow.UseBackgroundNotification)
         CreateHandlers(files);
 
       InitControls(files);
 
-      SetNotificationActivated();
+      if (SettingsWindow.UseBackgroundNotification)
+        SetNotificationActivated();
     }
 
     private void Window_ContentRendered(object sender, EventArgs e)
@@ -157,7 +158,7 @@ namespace LogViewer
     private void CreateHandlers(string[] files)
     {
       foreach (var file in files)
-        Task.Run(() => logHandlers.Add(new LogHandler(file, notifyLogo)));
+        Task.Run(() => logHandlers.Add(new LogHandler(file, this.notifyLogo)));
     }
 
     private void InitControls(string[] files)
@@ -198,61 +199,58 @@ namespace LogViewer
 
     private void SetNotificationActivated()
     {
-      if (SettingsWindow.UseBackgroundNotification)
+      ToastNotificationManagerCompat.OnActivated += toastArgs =>
       {
-        ToastNotificationManagerCompat.OnActivated += toastArgs =>
+        ToastArguments args = ToastArguments.Parse(toastArgs.Argument);
+
+        var type = string.Empty;
+        args.TryGetValue(NotificationTypeKey, out type);
+
+        if (type == NotificationError)
         {
-          ToastArguments args = ToastArguments.Parse(toastArgs.Argument);
+          var filePath = string.Empty;
+          args.TryGetValue(NotificationFilePathKey, out filePath);
 
-          var type = string.Empty;
-          args.TryGetValue(NotificationTypeKey, out type);
+          var time = string.Empty;
+          args.TryGetValue(NotificationTimeKey, out time);
 
-          if (type == NotificationError)
+          Application.Current.Dispatcher.Invoke(delegate
           {
-            var filePath = string.Empty;
-            args.TryGetValue(NotificationFilePathKey, out filePath);
+            if (!LogsFileNames.IsEnabled)
+              return;
 
-            var time = string.Empty;
-            args.TryGetValue(NotificationTimeKey, out time);
+            var selectedLog = (LogFile)LogsFileNames.SelectedItem;
 
-            Application.Current.Dispatcher.Invoke(delegate
+            if (selectedLog == null || selectedLog.FullPath.ToLower() != filePath.ToLower())
             {
-              if (!LogsFileNames.IsEnabled)
+              var logWithError = LogsFileNames.Items.Cast<LogFile>().FirstOrDefault(i => i.FullPath.ToLower() == filePath.ToLower());
+
+              if (logWithError == null)
                 return;
 
-              var selectedLog = (LogFile)LogsFileNames.SelectedItem;
+              LogsFileNames.SelectedItem = logWithError;
+            }
 
-              if (selectedLog == null || selectedLog.FullPath.ToLower() != filePath.ToLower())
-              {
-                var logWithError = LogsFileNames.Items.Cast<LogFile>().FirstOrDefault(i => i.FullPath.ToLower() == filePath.ToLower());
+            var dt = new DateTime(long.Parse(time));
+            var itemWithError = logLines.FirstOrDefault(i => i.Level == LogHandler.LogLevelError && i.Time == dt);
+            if (itemWithError != null)
+            {
+              BringToForeground();
 
-                if (logWithError == null)
-                  return;
+              if (!string.IsNullOrEmpty(Filter.Text))
+                Filter.Text = null;
 
-                LogsFileNames.SelectedItem = logWithError;
-              }
+              if (LevelFilter.SelectedValue != All)
+                LevelFilter.SelectedValue = All;
 
-              var dt = new DateTime(long.Parse(time));
-              var itemWithError = logLines.FirstOrDefault(i => i.Level == LogHandler.LogLevelError && i.Time == dt);
-              if (itemWithError != null)
-              {
-                BringToForeground();
-
-                if (!string.IsNullOrEmpty(Filter.Text))
-                  Filter.Text = null;
-
-                if (LevelFilter.SelectedValue != All)
-                  LevelFilter.SelectedValue = All;
-
-                SetFilter(string.Empty, All, All);
-                LogsGrid.SelectedItem = itemWithError;
-                LogsGrid.ScrollIntoView(itemWithError);
-                Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.ApplicationIdle, new Action(() => LogsGrid.Focus()));
-              }
-            });
-          }
-        };
-      }
+              SetFilter(string.Empty, All, All);
+              LogsGrid.SelectedItem = itemWithError;
+              LogsGrid.ScrollIntoView(itemWithError);
+              Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.ApplicationIdle, new Action(() => LogsGrid.Focus()));
+            }
+          });
+        }
+      };
     }
 
     private void CloseLogFile()

@@ -110,10 +110,9 @@ namespace LogViewer
       };
 
       if (CommonFileDialogResult.Ok == dialog.ShowDialog())
-      {
         LogsPathTextBox.Text = dialog.FileName;
-        this.Focus();
-      }
+
+      this.Focus();
     }
   }
 }

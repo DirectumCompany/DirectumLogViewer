@@ -27,38 +27,38 @@ namespace LogViewer
       fileName = Path.GetFileName(filePath);
 
       watcher = new LogWatcher(filePath);
-      watcher.BlockNewLines += OnBlockNewLines;
       watcher.ReadToEndLine();
+      watcher.BlockNewLines += OnBlockNewLines;
       watcher.StartWatch(WatchPeriod);
     }
 
     private void OnBlockNewLines(List<string> lines, bool isEndFile, double progress)
     {
-      if (watcher.IsStartedWatching)
+      if (!watcher.IsWatching)
+        return;
+
+      var convertedLogLines = Converter.ConvertLinesToObjects(lines);
+
+      foreach (var logLine in convertedLogLines)
       {
-        var convertedLogLines = Converter.ConvertLinesToObjects(lines);
-
-        foreach (var logLine in convertedLogLines)
+        if (logLine.Level == LogLevelError && SettingsWindow.UseBackgroundNotification)
         {
-          if (logLine.Level == LogLevelError)
+          try
           {
-            try
-            {
-              var truncatedMessage = logLine.Message.Substring(0, Math.Min(NotificationTextMaxLength, logLine.Message.Length));
+            var truncatedMessage = logLine.Message.Substring(0, Math.Min(NotificationTextMaxLength, logLine.Message.Length));
 
-              new ToastContentBuilder()
-                  .AddArgument(MainWindow.NotificationTypeKey, MainWindow.NotificationError)
-                  .AddArgument(MainWindow.NotificationFilePathKey, filePath)
-                  .AddArgument(MainWindow.NotificationTimeKey, logLine.Time.Ticks.ToString())
-                  .AddAppLogoOverride(icon, ToastGenericAppLogoCrop.Circle)
-                  .AddText(fileName)
-                  .AddText(truncatedMessage)
-                  .Show();
-            }
-            catch
-            {
-              // TODO не всегда приходят уведомлялки
-            }
+            new ToastContentBuilder()
+                .AddArgument(MainWindow.NotificationTypeKey, MainWindow.NotificationError)
+                .AddArgument(MainWindow.NotificationFilePathKey, filePath)
+                .AddArgument(MainWindow.NotificationTimeKey, logLine.Time.Ticks.ToString())
+                .AddAppLogoOverride(icon, ToastGenericAppLogoCrop.Circle)
+                .AddText(fileName)
+                .AddText(truncatedMessage)
+                .Show();
+          }
+          catch
+          {
+            // TODO не всегда приходят уведомлялки
           }
         }
       }
