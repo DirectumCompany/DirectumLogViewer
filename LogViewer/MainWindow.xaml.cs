@@ -394,7 +394,7 @@ namespace LogViewer
               var tenant = TenantFilter.SelectedValue as string;
               var level = LevelFilter.SelectedValue as string;
 
-              if (NeedShowLine(logLine, Filter.Text, tenant, level))
+              if (NeedShowLine(logLine, Filter.Text, tenant, level, this.UseRegex))
                 filteredLogLines.Add(logLine);
             }
           }
@@ -499,13 +499,13 @@ namespace LogViewer
       }
     }
 
-    private bool NeedShowLine(LogLine line, string filter, string tenant, string level)
+    private bool NeedShowLine(LogLine line, string filter, string tenant, string level, bool useRegex)
     {
       var result = true;
 
       if (result && !string.IsNullOrEmpty(filter))
       {
-        if (this.UseRegex)
+        if (useRegex)
         {
           try
           {
@@ -551,8 +551,11 @@ namespace LogViewer
 
       if (needFilter)
       {
-        filteredLogLines = new ObservableCollection<LogLine>(logLines.Where(l => NeedShowLine(l, includeFilter, tenant, level)));
-        LogsGrid.ItemsSource = filteredLogLines;
+        using (new WaitCursor())
+        {
+          filteredLogLines = new ObservableCollection<LogLine>(logLines.Where(l => NeedShowLine(l, includeFilter, tenant, level, this.UseRegex)));
+          LogsGrid.ItemsSource = filteredLogLines;
+        }
       }
       else
       {
@@ -591,8 +594,11 @@ namespace LogViewer
         var tenant = TenantFilter.SelectedValue as string;
         var level = LevelFilter.SelectedValue as string;
 
-        SearchGrid.ItemsSource = logLines.Where(l => NeedShowLine(l, dialog.SearchText.Text, tenant, level)).ToList();
-        BottomTabControl.SelectedItem = SearchTab;
+        using (new WaitCursor())
+        {
+          SearchGrid.ItemsSource = logLines.Where(l => NeedShowLine(l, dialog.SearchText.Text, tenant, level, dialog.UseRegex.IsChecked.Value)).ToList();
+          BottomTabControl.SelectedItem = SearchTab;
+        }        
       }
     }
 
