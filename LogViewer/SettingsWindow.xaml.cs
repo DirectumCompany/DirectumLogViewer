@@ -30,6 +30,7 @@ namespace LogViewer
     private static readonly List<string> DefaultListLogs = new List<string>
     {
       "${machinename}.WebServer.${shortdate}",
+      "${machinename}.GenericService.${shortdate}",
       "${machinename}.Worker.${shortdate}",
       "${machinename}.WorkerNetFx.${shortdate}",
       "${machinename}.WorkflowBlockService.${shortdate}",

@@ -20,6 +20,7 @@
     <None Remove="Resources\find.png" />
     <None Remove="Resources\horse.png" />
     <None Remove="Resources\horse_icon.ico" />
+    <None Remove="Resources\RegEx16.png" />
     <None Remove="Resources\settings.png" />
     <None Remove="Resources\visibility.png" />
     <None Remove="Resources\visibilityOff.png" />
@@ -40,6 +41,7 @@
     <Resource Include="Resources\find.png" />
     <Resource Include="Resources\horse.png" />
     <Resource Include="Resources\horse_icon.ico" />
+    <Resource Include="Resources\RegEx16.png" />
     <Resource Include="Resources\settings.png" />
     <Resource Include="Resources\visibility.png" />
     <Resource Include="Resources\visibilityOff.png" />

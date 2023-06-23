@@ -20,8 +20,9 @@
                                                 UpdateSourceTrigger=PropertyChanged}"
                                  x:Name="textSource" 
                                  Background="Transparent" 
-                                 Panel.ZIndex="2" />
-                            <TextBox Text="{TemplateBinding Tag}" Background="{TemplateBinding Background}" Panel.ZIndex="1">
+                                 Panel.ZIndex="2"
+                                 Padding="0,0,25,0"/>
+                            <TextBox Text="{TemplateBinding Tag}" Background="{TemplateBinding Background}" Panel.ZIndex="1" Padding="0,0,25,0" >
                                 <TextBox.Style>
                                     <Style TargetType="{x:Type TextBox}">
                                         <Setter Property="Foreground" Value="Transparent"/>
@@ -44,6 +45,18 @@
 
         <Image x:Key="VisibilityImage" Source ="/Resources/visibility.png" Width="21" Height="21" />
         <Image x:Key="VisibilityOffImage" Source ="/Resources/visibilityOff.png" Width="21" Height="21" />
+
+
+        <ContextMenu x:Key="RegexButton">
+            <MenuItem x:Name="UseRegex" Header="Use regex" IsCheckable="True" IsChecked="{Binding Path=UseRegex}" Click="UseRegex_Click" />
+            <Separator />
+            <MenuItem Header="Regex examples">
+                <MenuItem x:Name="RegexExample1" Header="A or B" Click="RegexExample1_Click"/>
+                <MenuItem x:Name="RegexExample2" Header="A and B" Click="RegexExample2_Click"/>
+                <MenuItem x:Name="RegexExample3" Header="A and B and !(C and D)" Click="RegexExample3_Click"/>
+            </MenuItem>
+
+        </ContextMenu>
     </Window.Resources>
 
     <Window.CommandBindings>
@@ -72,7 +85,9 @@
                 <ColumnDefinition Width="auto" />
                 <ColumnDefinition Width="auto" />
                 <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="auto" />
+                <ColumnDefinition Width="auto" />
+                <ColumnDefinition Width="auto" />
                 <ColumnDefinition Width="auto" />
                 <ColumnDefinition Width="auto" />
                 <ColumnDefinition Width="auto" />
@@ -89,11 +104,15 @@
             <ComboBox Grid.Column="4" x:Name="LevelFilter" HorizontalAlignment="Left"  VerticalAlignment="Center" FontStyle="Normal" Width="150" Height="24" FontSize="14" SelectionChanged="FilterLevel_SelectionChanged"/>
 
 
-            <TextBox x:Name="Filter" Grid.Column="5" HorizontalAlignment="Stretch" Style="{StaticResource placeHolder}" Tag="Include filter.." Text="" TextWrapping="Wrap" VerticalAlignment="Center" Height="25" FontSize="14" FontStyle="Normal" Margin="5,0,0,0" TextChanged="Filter_TextChanged"/>
-            <TextBox x:Name="ExcludeFilter" Grid.Column="6" HorizontalAlignment="Stretch" Style="{StaticResource placeHolder}" Tag="Exclude filter.." Text="" TextWrapping="Wrap" VerticalAlignment="Center" Height="25" FontSize="14" FontStyle="Normal" Margin="5,0,0,0" TextChanged="ExcludeFilter_TextChanged"/>
+            <StackPanel Grid.Column="5" Orientation="Vertical" VerticalAlignment="Stretch" Margin="0,2,0,0">
+                <Grid>
+                    <TextBox x:Name="Filter" Style="{StaticResource placeHolder}" Tag="Filter.."  Text="" TextWrapping="Wrap" VerticalAlignment="Center" FontSize="14" FontStyle="Normal" Margin="5,0,0,0" TextChanged="Filter_TextChanged" HorizontalAlignment="Stretch" Height="24"/>
+                    <Button x:Name="RegexButton" Width="20" Height="20"  HorizontalAlignment="Right" Margin="0,0,2,0" Background="Transparent" BorderThickness="0" Click="RegexButton_Click" >
+                        <Image Source="Resources/regex16.png" Stretch="None"/>
+                    </Button>
+                </Grid>
+            </StackPanel>
 
-            <Label Grid.Column="7" Content="Regex" FontStyle="Normal" FontSize="14" VerticalAlignment="Top" Margin="5,0,0,0"/>
-            <CheckBox Grid.Column="8" x:Name="UseRegex" HorizontalAlignment="Left"  IsChecked="False" VerticalAlignment="Center" FontStyle="Normal" Height="24" FontSize="14" Checked="UseRegex_Checked" Unchecked="UseRegex_Unchecked"/>
 
 
             <ToggleButton x:Name="ColumnVisibilityToggleBtn" Grid.Column="9" Width="25" Height="25" Margin="5,0,0,0" Checked = "ColumnVisibilityCheck" Unchecked = "ColumnVisibilityUnchecked" HorizontalAlignment="Right">
@@ -111,7 +130,7 @@
                     </Style>
                 </ToggleButton.Style>
             </ToggleButton>
-            
+
             <Button Grid.Column="10" Width="25" Height="25" Margin="5,0,0,0" HorizontalAlignment="Right" Command="{StaticResource SearchTextCommand}" >
                 <DockPanel>
                     <Image Source="Resources/find.png"/>
@@ -123,14 +142,14 @@
                     <Image Source="Resources/settings.png"/>
                 </DockPanel>
             </Button>
-              
+
         </Grid>
 
         <DataGrid x:Name="LogsGrid" Grid.Row="1" AutoGenerateColumns="False" HorizontalGridLinesBrush="#FFC7C7C7" GridLinesVisibility="Horizontal" Margin="0,0,0,0" SelectionMode="Extended" RowHeight="20" SelectionChanged="LogsGrid_SelectionChanged" CanUserAddRows="false" CanUserDeleteRows="False" SelectionUnit="FullRow" >
 
             <DataGrid.CellStyle>
                 <Style TargetType="{x:Type DataGridCell}">
-                    
+
                     <Style.Triggers>
                         <DataTrigger Binding="{Binding Level}" Value="Error">
                             <Setter Property="Foreground" Value="Red" />
