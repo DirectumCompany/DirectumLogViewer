@@ -16,6 +16,7 @@ using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
+using System.Text.RegularExpressions;
 
 namespace LogViewer
 {
@@ -42,6 +43,8 @@ namespace LogViewer
 
     private const int GridUpdatePeriod = 1000;
 
+    // UseRegex is binding proprety
+    public bool UseRegex { get; set; }
 
     private readonly List<LogHandler> logHandlers = new List<LogHandler>();
 
@@ -60,6 +63,7 @@ namespace LogViewer
     private string openedFileFullPath;
 
     private readonly string[] hiddenColumns = { "Pid", "Trace", "Tenant" };
+
 
     public MainWindow()
     {
@@ -390,7 +394,7 @@ namespace LogViewer
               var tenant = TenantFilter.SelectedValue as string;
               var level = LevelFilter.SelectedValue as string;
 
-              if (NeedShowLine(logLine, Filter.Text, tenant, level))
+              if (NeedShowLine(logLine, Filter.Text, tenant, level, this.UseRegex))
                 filteredLogLines.Add(logLine);
             }
           }
@@ -495,24 +499,40 @@ namespace LogViewer
       }
     }
 
-    private bool NeedShowLine(LogLine line, string text, string tenant, string level)
+    private bool NeedShowLine(LogLine line, string filter, string tenant, string level, bool useRegex)
     {
       var result = true;
 
-      if (!string.IsNullOrEmpty(text))
+      if (result && !string.IsNullOrEmpty(filter))
       {
-        result = (!string.IsNullOrEmpty(line.FullMessage) && line.FullMessage.IndexOf(text, StringComparison.OrdinalIgnoreCase) > -1) ||
-          (!string.IsNullOrEmpty(line.Trace) && line.Trace.IndexOf(text, StringComparison.OrdinalIgnoreCase) > -1) ||
-          (!string.IsNullOrEmpty(line.Pid) && line.Pid.IndexOf(text, StringComparison.OrdinalIgnoreCase) > -1) ||
-          (!string.IsNullOrEmpty(line.Level) && line.Level.IndexOf(text, StringComparison.OrdinalIgnoreCase) > -1);
+        if (useRegex)
+        {
+          try
+          {
+            Regex regex = new Regex(filter, RegexOptions.IgnoreCase | RegexOptions.Singleline);
+            result = !string.IsNullOrEmpty(line.FullMessage) && regex.IsMatch(line.FullMessage);
+          }
+          catch (RegexParseException)
+          {
+            result = false;
+          }
+        }
+        else
+          result = !string.IsNullOrEmpty(line.FullMessage) && line.FullMessage.IndexOf(filter, StringComparison.OrdinalIgnoreCase) > -1;
+
+        result = result || (!string.IsNullOrEmpty(line.Trace) && line.Trace.IndexOf(filter, StringComparison.OrdinalIgnoreCase) > -1) ||
+                           (!string.IsNullOrEmpty(line.Pid) && line.Pid.IndexOf(filter, StringComparison.OrdinalIgnoreCase) > -1) ||
+                           (!string.IsNullOrEmpty(line.Level) && line.Level.IndexOf(filter, StringComparison.OrdinalIgnoreCase) > -1);
       }
 
-      if (!string.IsNullOrEmpty(tenant) && !string.Equals(tenant, All, StringComparison.InvariantCultureIgnoreCase))
+
+
+      if (result && !string.IsNullOrEmpty(tenant) && !string.Equals(tenant, All, StringComparison.InvariantCultureIgnoreCase))
       {
         result = result && string.Equals(line.Tenant, tenant, StringComparison.InvariantCultureIgnoreCase);
       }
 
-      if (!string.IsNullOrEmpty(level) && !string.Equals(level, All, StringComparison.InvariantCultureIgnoreCase))
+      if (result && !string.IsNullOrEmpty(level) && !string.Equals(level, All, StringComparison.InvariantCultureIgnoreCase))
       {
         result = result && line.Level != null && string.Equals(line.Level, level, StringComparison.InvariantCultureIgnoreCase);
       }
@@ -520,19 +540,22 @@ namespace LogViewer
       return result;
     }
 
-    private void SetFilter(string text, string tenant, string level)
+    private void SetFilter(string includeFilter, string tenant, string level)
     {
       if (logLinesView == null)
         return;
 
-      var needFilter = !String.IsNullOrEmpty(text) ||
-        (!String.Equals(tenant, All) && !String.IsNullOrEmpty(tenant)) ||
-        (!String.Equals(level, All) && !String.IsNullOrEmpty(level));
+      var needFilter = !String.IsNullOrEmpty(includeFilter) ||
+                       (!String.Equals(tenant, All) && !String.IsNullOrEmpty(tenant)) ||
+                       (!String.Equals(level, All) && !String.IsNullOrEmpty(level));
 
       if (needFilter)
       {
-        filteredLogLines = new ObservableCollection<LogLine>(logLines.Where(l => NeedShowLine(l, text, tenant, level)));
-        LogsGrid.ItemsSource = filteredLogLines;
+        using (new WaitCursor())
+        {
+          filteredLogLines = new ObservableCollection<LogLine>(logLines.Where(l => NeedShowLine(l, includeFilter, tenant, level, this.UseRegex)));
+          LogsGrid.ItemsSource = filteredLogLines;
+        }
       }
       else
       {
@@ -571,8 +594,11 @@ namespace LogViewer
         var tenant = TenantFilter.SelectedValue as string;
         var level = LevelFilter.SelectedValue as string;
 
-        SearchGrid.ItemsSource = logLines.Where(l => NeedShowLine(l, dialog.SearchText.Text, tenant, level)).ToList();
-        BottomTabControl.SelectedItem = SearchTab;
+        using (new WaitCursor())
+        {
+          SearchGrid.ItemsSource = logLines.Where(l => NeedShowLine(l, dialog.SearchText.Text, tenant, level, dialog.UseRegex.IsChecked.Value)).ToList();
+          BottomTabControl.SelectedItem = SearchTab;
+        }        
       }
     }
 
@@ -791,5 +817,39 @@ namespace LogViewer
     }
     #endregion
 
+    private void RegexButton_Click(object sender, RoutedEventArgs e)
+    {
+      ContextMenu cm = this.FindResource("RegexButton") as ContextMenu;
+      cm.PlacementTarget = sender as Button;
+      cm.IsOpen = true;
+    }
+
+    private void RegexExample1_Click(object sender, RoutedEventArgs e)
+    {
+      this.Filter.Text = "cat|dog";
+      UseRegex = true;
+    }
+
+    private void RegexExample2_Click(object sender, RoutedEventArgs e)
+    {
+      this.Filter.Text = "(?=.*cat)(?=.*dog)";
+      UseRegex = true;
+    }
+
+    private void RegexExample3_Click(object sender, RoutedEventArgs e)
+    {
+      this.Filter.Text = "(?=.*cat)(?=.*dog)(^(?!.*(horse|pig)).*$)";
+      UseRegex = true;
+    }
+
+    private void UseRegex_Click(object sender, RoutedEventArgs e)
+    {
+      if (this.Filter.IsEnabled)
+      {
+        var tenant = this.TenantFilter.SelectedValue as string;
+        var level = this.LevelFilter.SelectedValue as string;
+        this.SetFilter(this.Filter.Text, tenant, level);
+      }
+    }
   }
 }
