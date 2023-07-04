@@ -489,7 +489,9 @@ namespace LogViewer
       TextBox tb = (TextBox)sender;
       int startLength = tb.Text.Length;
 
-      await Task.Delay(1500);
+      int delay = UseRegex ? 5000 : 1500;
+
+      await Task.Delay(delay);
 
       if (startLength == tb.Text.Length && tb.IsEnabled && e.UndoAction != UndoAction.Clear)
       {
