@@ -27,9 +27,10 @@ namespace LogViewer
       fileName = Path.GetFileName(filePath);
 
       watcher = new LogWatcher(filePath);
-      watcher.ReadToEndLine();
+      watcher.ReadToEndLineWithoutLock();
       watcher.BlockNewLines += OnBlockNewLines;
       watcher.StartWatch(WatchPeriod);
+      watcher.StartFileSystemWatcher();
     }
 
     private void OnBlockNewLines(List<string> lines, bool isEndFile, double progress)

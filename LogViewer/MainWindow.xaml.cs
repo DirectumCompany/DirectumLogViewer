@@ -295,12 +295,13 @@ namespace LogViewer
 
         logWatcher = new LogWatcher(fullPath);
         logWatcher.BlockNewLines += OnBlockNewLines;
-        logWatcher.FileReCreated += OnFileReCreated;
-        logWatcher.ReadToEndLine();
+        //logWatcher.FileReCreated += OnFileReCreated;
+        logWatcher.ReadToEndLineWithoutLock();
         LogsGrid.ItemsSource = logLines;
         LogsGrid.ScrollIntoView(logLines.Last());
 
-        logWatcher.StartWatch(GridUpdatePeriod);
+        //logWatcher.StartWatch(GridUpdatePeriod);
+        logWatcher.StartFileSystemWatcher();
 
         var tenants = logLines.Where(l => !string.IsNullOrEmpty(l.Tenant)).Select(l => l.Tenant).Distinct().OrderBy(l => l);
 
@@ -372,7 +373,7 @@ namespace LogViewer
       Application.Current.Dispatcher.Invoke(
         new Action(() =>
         {
-          if (LoadBar.Visibility == Visibility.Visible && LoadBar.Value != progress)
+            if (LoadBar.Visibility == Visibility.Visible && LoadBar.Value != progress)
             LoadBar.Dispatcher.Invoke(() => LoadBar.Value = progress, DispatcherPriority.Background);
 
           var scrollToEnd = false;
