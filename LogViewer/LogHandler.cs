@@ -13,7 +13,6 @@ namespace LogViewer
   {
     public const string LogLevelError = "Error";
     private const int NotificationTextMaxLength = 200;
-    private const int WatchPeriod = 3000;
 
     private readonly string filePath;
     private readonly Uri icon;
@@ -27,13 +26,12 @@ namespace LogViewer
       fileName = Path.GetFileName(filePath);
 
       watcher = new LogWatcher(filePath);
-      watcher.ReadToEndLineWithoutLock();
+      watcher.ReadToEndLine();
       watcher.BlockNewLines += OnBlockNewLines;
-      watcher.StartWatch(WatchPeriod);
       watcher.StartFileSystemWatcher();
     }
 
-    private void OnBlockNewLines(List<string> lines, bool isEndFile, double progress)
+    private void OnBlockNewLines(List<string> lines, double progress)
     {
       if (!watcher.IsWatching)
         return;
