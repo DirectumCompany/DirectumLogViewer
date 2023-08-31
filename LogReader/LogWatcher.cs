@@ -1,7 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Timers;
 
 namespace LogReader
@@ -24,6 +27,7 @@ namespace LogReader
         private long fileLength;
         private long position;
         private string filePath;
+        private const int GridUpdateTimer = 1000;
 
         /// <summary>
         /// Кол-во max строк для блока записи.
@@ -76,8 +80,7 @@ namespace LogReader
             {
                 using var fileStream = new FileStream(this.filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
                 using var streamReader = new StreamReader(fileStream);
-                var current_length = streamReader.BaseStream.Length;
-
+                long current_length = streamReader.BaseStream.Length;
                 if (current_length < fileLength)
                 {
                     streamReader.DiscardBufferedData();
@@ -117,6 +120,7 @@ namespace LogReader
         /// </summary>
         private void OnChange(object sender, FileSystemEventArgs e)
         {
+            Thread.Sleep(GridUpdateTimer);
             ReadToEndLine();
         }
 

@@ -41,8 +41,6 @@ namespace LogViewer
 
     private const string IconFileName = "horse.png";
 
-    private const int GridUpdatePeriod = 1000;
-
     // UseRegex is binding proprety
     public bool UseRegex { get; set; }
 
