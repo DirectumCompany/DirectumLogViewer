@@ -28,6 +28,7 @@ namespace LogReader
         private long position;
         private string filePath;
         private const int GridUpdateTimer = 1000;
+        private DateTime lastRead = DateTime.MinValue;
 
         /// <summary>
         /// Кол-во max строк для блока записи.
@@ -120,17 +121,23 @@ namespace LogReader
         /// </summary>
         private void OnChange(object sender, FileSystemEventArgs e)
         {
-            Thread.Sleep(GridUpdateTimer);
-            ReadToEndLine();
+            DateTime lastWriteTime = File.GetLastWriteTime(this.filePath);
+            if (lastWriteTime != lastRead)
+            {
+                Thread.Sleep(GridUpdateTimer);
+                ReadToEndLine();
+                lastRead = lastWriteTime;
+
+            }
         }
 
-        /// <summary>
-        /// Заполнение прогресса.
-        /// Вызов делегата BlockNewLines.
-        /// </summary>
-        /// <param name="lines">Новые прочитанные строки.</param>
-        /// <param name="streamReader">Экземпляр reader для работы в обработчике.</param>
-        private void InvokeBlockNewLinesEvent(List<string> lines, StreamReader streamReader)
+            /// <summary>
+            /// Заполнение прогресса.
+            /// Вызов делегата BlockNewLines.
+            /// </summary>
+            /// <param name="lines">Новые прочитанные строки.</param>
+            /// <param name="streamReader">Экземпляр reader для работы в обработчике.</param>
+            private void InvokeBlockNewLinesEvent(List<string> lines, StreamReader streamReader)
         {
             var progress = fileLength == 0 ? 100 : 100 * streamReader.BaseStream.Position / fileLength;
             BlockNewLines?.Invoke(lines, progress);
