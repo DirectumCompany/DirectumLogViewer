@@ -131,13 +131,13 @@ namespace LogReader
             }
         }
 
-            /// <summary>
-            /// Заполнение прогресса.
-            /// Вызов делегата BlockNewLines.
-            /// </summary>
-            /// <param name="lines">Новые прочитанные строки.</param>
-            /// <param name="streamReader">Экземпляр reader для работы в обработчике.</param>
-            private void InvokeBlockNewLinesEvent(List<string> lines, StreamReader streamReader)
+        /// <summary>
+        /// Заполнение прогресса.
+        /// Вызов делегата BlockNewLines.
+        /// </summary>
+        /// <param name="lines">Новые прочитанные строки.</param>
+        /// <param name="streamReader">Экземпляр reader для работы в обработчике.</param>
+        private void InvokeBlockNewLinesEvent(List<string> lines, StreamReader streamReader)
         {
             var progress = fileLength == 0 ? 100 : 100 * streamReader.BaseStream.Position / fileLength;
             BlockNewLines?.Invoke(lines, progress);
