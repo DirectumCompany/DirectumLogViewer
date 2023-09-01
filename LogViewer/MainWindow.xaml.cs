@@ -40,8 +40,9 @@ namespace LogViewer
     private const string All = "All";
 
     private const string IconFileName = "horse.png";
+    private const int GridUpdatePeriod = 1000;
 
-    // UseRegex is binding proprety
+        // UseRegex is binding proprety
     public bool UseRegex { get; set; }
 
     private readonly List<LogHandler> logHandlers = new List<LogHandler>();
@@ -306,7 +307,7 @@ namespace LogViewer
         if(logLines.Any())
             LogsGrid.ScrollIntoView(logLines.Last());
 
-        logWatcher.StartFileSystemWatcher();
+        logWatcher.StartWatch(GridUpdatePeriod);
 
         var tenants = logLines.Where(l => !string.IsNullOrEmpty(l.Tenant)).Select(l => l.Tenant).Distinct().OrderBy(l => l);
 

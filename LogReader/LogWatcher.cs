@@ -3,8 +3,6 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
 using System.Runtime.InteropServices;
-using System.Threading;
-using System.Threading.Tasks;
 using System.Timers;
 
 namespace LogReader
@@ -22,13 +20,11 @@ namespace LogReader
         public delegate void FileReCreatedHandler();
         public event FileReCreatedHandler FileReCreated;
 
-        private FileSystemWatcher fileSystemWatcher;
         private readonly object readLock = new object();
         private long fileLength;
         private long position;
-        private string filePath;
-        private const int GridUpdateTimer = 1000;
-        private DateTime lastRead = DateTime.MinValue;
+        private readonly string filePath;
+        private Timer timer;
 
         /// <summary>
         /// Кол-во max строк для блока записи.
@@ -42,21 +38,6 @@ namespace LogReader
         public LogWatcher(string filePath)
         {
             this.filePath = filePath;
-            fileSystemWatcher = new FileSystemWatcher(Path.GetDirectoryName(this.filePath))
-            {
-                NotifyFilter = NotifyFilters.Attributes
-                                | NotifyFilters.CreationTime
-                                | NotifyFilters.DirectoryName
-                                | NotifyFilters.FileName
-                                | NotifyFilters.LastAccess
-                                | NotifyFilters.LastWrite
-                                | NotifyFilters.Security
-                                | NotifyFilters.Size
-            };
-            fileSystemWatcher.Filter = Path.GetFileName(this.filePath);
-            fileSystemWatcher.IncludeSubdirectories = true;
-            fileSystemWatcher.EnableRaisingEvents = true;
-            fileSystemWatcher.Changed += OnChange;
             fileLength = 0;
         }
 
@@ -64,12 +45,20 @@ namespace LogReader
         /// При возможном сбое повторного просмотра файла - вылетает ошибка.
         /// </summary>
         /// <exception cref="Exception">Log file already watching</exception>
-        public void StartFileSystemWatcher()
+        public void StartWatch(int period)
         {
             if (IsWatching)
                 throw new Exception("Log file already watching");
 
             IsWatching = true;
+
+            timer = new Timer
+            {
+                AutoReset = false,
+                Interval = period
+            };
+            timer.Elapsed += OnTimedEvent;
+            timer.Start();
         }
 
         /// <summary>
@@ -116,19 +105,10 @@ namespace LogReader
             }
         }
 
-        /// <summary>
-        /// Event на изменение файла.
-        /// </summary>
-        private void OnChange(object sender, FileSystemEventArgs e)
+        private void OnTimedEvent(Object source, ElapsedEventArgs e)
         {
-            DateTime lastWriteTime = File.GetLastWriteTime(this.filePath);
-            if (lastWriteTime != lastRead)
-            {
-                Thread.Sleep(GridUpdateTimer);
-                ReadToEndLine();
-                lastRead = lastWriteTime;
-
-            }
+            ReadToEndLine();
+            timer.Start();
         }
 
         /// <summary>
@@ -148,10 +128,10 @@ namespace LogReader
         /// </summary>
         public void Dispose()
         {
-            if (fileSystemWatcher != null)
+            if (timer != null)
             {
-                fileSystemWatcher.Dispose();
-                fileSystemWatcher = null;
+                timer.Dispose();
+                timer = null;
             }
         }
 
