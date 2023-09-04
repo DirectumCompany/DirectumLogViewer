@@ -32,7 +32,7 @@ namespace LogViewer
       watcher.StartWatch(WatchPeriod);
     }
 
-    private void OnBlockNewLines(List<string> lines, bool isEndFile, double progress)
+    private void OnBlockNewLines(List<string> lines, double progress)
     {
       if (!watcher.IsWatching)
         return;

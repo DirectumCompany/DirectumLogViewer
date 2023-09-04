@@ -40,10 +40,9 @@ namespace LogViewer
     private const string All = "All";
 
     private const string IconFileName = "horse.png";
-
     private const int GridUpdatePeriod = 1000;
 
-    // UseRegex is binding proprety
+        // UseRegex is binding proprety
     public bool UseRegex { get; set; }
 
     private readonly List<LogHandler> logHandlers = new List<LogHandler>();
@@ -257,6 +256,9 @@ namespace LogViewer
       };
     }
 
+    /// <summary>
+    /// Закрытие лог файла с уничтожением потоков.
+    /// </summary>
     private void CloseLogFile()
     {
       // Clear previous log resources
@@ -276,6 +278,10 @@ namespace LogViewer
       GC.Collect();
     }
 
+    /// <summary>
+    /// Открытие файла с прочтением данных и настройкой дальнейшего слежения за ним.
+    /// </summary>
+    /// <param name="fullPath">Путь до файла.</param>
     private void OpenLogFile(string fullPath)
     {
       try
@@ -298,7 +304,8 @@ namespace LogViewer
         logWatcher.FileReCreated += OnFileReCreated;
         logWatcher.ReadToEndLine();
         LogsGrid.ItemsSource = logLines;
-        LogsGrid.ScrollIntoView(logLines.Last());
+        if(logLines.Any())
+            LogsGrid.ScrollIntoView(logLines.Last());
 
         logWatcher.StartWatch(GridUpdatePeriod);
 
@@ -326,6 +333,9 @@ namespace LogViewer
       }
     }
 
+    /// <summary>
+    /// Метод подмены файла
+    /// </summary>
     private void Files_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
       var filterValue = Filter.Text;
@@ -364,15 +374,19 @@ namespace LogViewer
       Filter.Text = filterValue;
       LevelFilter.SelectedValue = levelValue;
     }
-
-    private void OnBlockNewLines(List<string> lines, bool isEndFile, double progress)
+    /// <summary>
+    /// Обработка блока прочитанных строк.
+    /// </summary>
+    /// <param name="lines">Новые строки.</param>
+    /// <param name="progress"></param>
+    private void OnBlockNewLines(List<string> lines, double progress)
     {
       var convertedLogLines = Converter.ConvertLinesToObjects(lines);
 
       Application.Current.Dispatcher.Invoke(
         new Action(() =>
         {
-          if (LoadBar.Visibility == Visibility.Visible && LoadBar.Value != progress)
+            if (LoadBar.Visibility == Visibility.Visible && LoadBar.Value != progress)
             LoadBar.Dispatcher.Invoke(() => LoadBar.Value = progress, DispatcherPriority.Background);
 
           var scrollToEnd = false;
@@ -399,12 +413,15 @@ namespace LogViewer
             }
           }
 
-          if (scrollToEnd)
+          if (scrollToEnd && convertedLogLines.Any())
             LogsGrid.ScrollIntoView(convertedLogLines.Last());
 
         }));
     }
 
+    /// <summary>
+    /// Переоткрытие файла.
+    /// </summary>
     private void OnFileReCreated()
     {
       Application.Current.Dispatcher.Invoke(new Action(() =>
