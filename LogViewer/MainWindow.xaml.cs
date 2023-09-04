@@ -42,7 +42,7 @@ namespace LogViewer
     private const string IconFileName = "horse.png";
     private const int GridUpdatePeriod = 1000;
 
-        // UseRegex is binding proprety
+    // UseRegex is binding proprety
     public bool UseRegex { get; set; }
 
     private readonly List<LogHandler> logHandlers = new List<LogHandler>();
@@ -304,8 +304,8 @@ namespace LogViewer
         logWatcher.FileReCreated += OnFileReCreated;
         logWatcher.ReadToEndLine();
         LogsGrid.ItemsSource = logLines;
-        if(logLines.Any())
-            LogsGrid.ScrollIntoView(logLines.Last());
+        if (logLines.Any())
+          LogsGrid.ScrollIntoView(logLines.Last());
 
         logWatcher.StartWatch(GridUpdatePeriod);
 
@@ -386,7 +386,7 @@ namespace LogViewer
       Application.Current.Dispatcher.Invoke(
         new Action(() =>
         {
-            if (LoadBar.Visibility == Visibility.Visible && LoadBar.Value != progress)
+          if (LoadBar.Visibility == Visibility.Visible && LoadBar.Value != progress)
             LoadBar.Dispatcher.Invoke(() => LoadBar.Value = progress, DispatcherPriority.Background);
 
           var scrollToEnd = false;
@@ -426,9 +426,11 @@ namespace LogViewer
     {
       Application.Current.Dispatcher.Invoke(new Action(() =>
       {
-        CloseLogFile();
-        if (!string.IsNullOrEmpty(openedFileFullPath))
-          OpenLogFile(openedFileFullPath);
+        if (logLines != null)
+          logLines.Clear();
+
+        if (filteredLogLines != null)
+          filteredLogLines.Clear();
       }));
     }
 
@@ -617,7 +619,7 @@ namespace LogViewer
         {
           SearchGrid.ItemsSource = logLines.Where(l => NeedShowLine(l, dialog.SearchText.Text, tenant, level, dialog.UseRegex.IsChecked.Value)).ToList();
           BottomTabControl.SelectedItem = SearchTab;
-        }        
+        }
       }
     }
 
