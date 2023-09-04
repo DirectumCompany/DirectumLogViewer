@@ -5,7 +5,7 @@
     <TargetFramework>net6.0-windows10.0.17763.0</TargetFramework>
     <UseWPF>true</UseWPF>
     <ApplicationIcon>Resources\horse_icon.ico</ApplicationIcon>
-    <Version>1.0.5</Version>
+    <Version>1.0.6</Version>
     <Company>Directum</Company>
     <Product>Directum Log Viewer</Product>
     <Authors>Directum</Authors>
