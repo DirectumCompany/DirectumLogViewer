@@ -175,6 +175,7 @@ namespace LogViewer
 
       InitTenantFilter();
       InitLevelFilter();
+      InitLoggerFilter();
 
       logLinesView = CollectionViewSource.GetDefaultView(logLines);
     }
@@ -184,6 +185,12 @@ namespace LogViewer
       TenantFilter.Items.Clear();
       TenantFilter.Items.Add(All);
       TenantFilter.SelectedValue = All;
+    }
+    private void InitLoggerFilter()
+    {
+      LoggerFilter.Items.Clear();
+      LoggerFilter.Items.Add(All);
+      LoggerFilter.SelectedValue = All;
     }
 
     private void InitLevelFilter()
@@ -246,7 +253,7 @@ namespace LogViewer
               if (LevelFilter.SelectedValue != All)
                 LevelFilter.SelectedValue = All;
 
-              SetFilter(string.Empty, All, All);
+              SetFilter(string.Empty, All, All, All);
               LogsGrid.SelectedItem = itemWithError;
               LogsGrid.ScrollIntoView(itemWithError);
               Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.ApplicationIdle, new Action(() => LogsGrid.Focus()));
@@ -271,6 +278,7 @@ namespace LogViewer
       logLines.Clear();
       InitTenantFilter();
       InitLevelFilter();
+      InitLoggerFilter();
       this.Title = WindowTitle;
       LogsGrid.ItemsSource = null;
       SearchGrid.ItemsSource = null;
@@ -293,6 +301,7 @@ namespace LogViewer
         ColumnVisibilityToggleBtn.IsEnabled = false;
         TenantFilter.IsEnabled = false;
         LevelFilter.IsEnabled = false;
+        LoggerFilter.IsEnabled = false;
         Filter.Clear();
 
         this.Title = string.Format($"{WindowTitle} ({fullPath})");
@@ -315,6 +324,13 @@ namespace LogViewer
         {
           TenantFilter.Items.Add(tenant);
         }
+
+        var loggers = logLines.Where(l => !string.IsNullOrEmpty(l.Logger)).Select(l => l.Logger).Distinct().OrderBy(l => l);
+
+        foreach (var logger in loggers)
+        {
+          LoggerFilter.Items.Add(logger);
+        }
       }
       catch (Exception e)
       {
@@ -329,6 +345,7 @@ namespace LogViewer
         ColumnVisibilityToggleBtn.IsEnabled = true;
         TenantFilter.IsEnabled = true;
         LevelFilter.IsEnabled = true;
+        LoggerFilter.IsEnabled = true;
         GC.Collect();
       }
     }
@@ -407,8 +424,9 @@ namespace LogViewer
             {
               var tenant = TenantFilter.SelectedValue as string;
               var level = LevelFilter.SelectedValue as string;
+              var logger = LoggerFilter.SelectedValue as string;
 
-              if (NeedShowLine(logLine, Filter.Text, tenant, level, this.UseRegex))
+              if (NeedShowLine(logLine, Filter.Text, tenant, level, logger, this.UseRegex))
                 filteredLogLines.Add(logLine);
             }
           }
@@ -516,11 +534,12 @@ namespace LogViewer
       {
         var tenant = TenantFilter.SelectedValue as string;
         var level = LevelFilter.SelectedValue as string;
-        SetFilter(tb.Text, tenant, level);
+        var logger = LoggerFilter.SelectedValue as string;
+        SetFilter(tb.Text, tenant, level, logger);
       }
     }
 
-    private bool NeedShowLine(LogLine line, string filter, string tenant, string level, bool useRegex)
+    private bool NeedShowLine(LogLine line, string filter, string tenant, string level, string logger, bool useRegex)
     {
       var result = true;
 
@@ -543,8 +562,7 @@ namespace LogViewer
 
         result = result || (!string.IsNullOrEmpty(line.Trace) && line.Trace.IndexOf(filter, StringComparison.OrdinalIgnoreCase) > -1) ||
                            (!string.IsNullOrEmpty(line.Pid) && line.Pid.IndexOf(filter, StringComparison.OrdinalIgnoreCase) > -1) ||
-                           (!string.IsNullOrEmpty(line.Level) && line.Level.IndexOf(filter, StringComparison.OrdinalIgnoreCase) > -1) ||
-                           (!string.IsNullOrEmpty(line.Logger) && line.Logger.IndexOf(filter, StringComparison.OrdinalIgnoreCase) > -1);
+                           (!string.IsNullOrEmpty(line.Level) && line.Level.IndexOf(filter, StringComparison.OrdinalIgnoreCase) > -1);
       }
 
 
@@ -559,23 +577,29 @@ namespace LogViewer
         result = result && line.Level != null && string.Equals(line.Level, level, StringComparison.InvariantCultureIgnoreCase);
       }
 
+      if (result && !string.IsNullOrEmpty(logger) && !string.Equals(logger, All, StringComparison.InvariantCultureIgnoreCase))
+      {
+        result = result && line.Logger != null && string.Equals(line.Logger, logger, StringComparison.InvariantCultureIgnoreCase);
+      }
+
       return result;
     }
 
-    private void SetFilter(string includeFilter, string tenant, string level)
+    private void SetFilter(string includeFilter, string tenant, string level, string logger)
     {
       if (logLinesView == null)
         return;
 
       var needFilter = !String.IsNullOrEmpty(includeFilter) ||
                        (!String.Equals(tenant, All) && !String.IsNullOrEmpty(tenant)) ||
-                       (!String.Equals(level, All) && !String.IsNullOrEmpty(level));
+                       (!String.Equals(level, All) && !String.IsNullOrEmpty(level)) ||
+                       (!String.Equals(logger, All) && !String.IsNullOrEmpty(logger));
 
       if (needFilter)
       {
         using (new WaitCursor())
         {
-          filteredLogLines = new ObservableCollection<LogLine>(logLines.Where(l => NeedShowLine(l, includeFilter, tenant, level, this.UseRegex)));
+          filteredLogLines = new ObservableCollection<LogLine>(logLines.Where(l => NeedShowLine(l, includeFilter, tenant, level, logger, this.UseRegex)));
           LogsGrid.ItemsSource = filteredLogLines;
         }
       }
@@ -615,10 +639,11 @@ namespace LogViewer
       {
         var tenant = TenantFilter.SelectedValue as string;
         var level = LevelFilter.SelectedValue as string;
+        var logger = LoggerFilter.SelectedValue as string;
 
         using (new WaitCursor())
         {
-          SearchGrid.ItemsSource = logLines.Where(l => NeedShowLine(l, dialog.SearchText.Text, tenant, level, dialog.UseRegex.IsChecked.Value)).ToList();
+          SearchGrid.ItemsSource = logLines.Where(l => NeedShowLine(l, dialog.SearchText.Text, tenant, level, logger, dialog.UseRegex.IsChecked.Value)).ToList();
           BottomTabControl.SelectedItem = SearchTab;
         }
       }
@@ -641,7 +666,8 @@ namespace LogViewer
       if (tenant != null)
       {
         var level = LevelFilter.SelectedValue as string;
-        SetFilter(Filter.Text, tenant, level);
+        var logger = LoggerFilter.SelectedValue as string;
+        SetFilter(Filter.Text, tenant, level, logger);
       }
     }
 
@@ -652,7 +678,19 @@ namespace LogViewer
       if (level != null)
       {
         var tenant = TenantFilter.SelectedValue as string;
-        SetFilter(Filter.Text, tenant, level);
+        var logger = LoggerFilter.SelectedValue as string;
+        SetFilter(Filter.Text, tenant, level, logger);
+      }
+    }
+    private void FilterLogger_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+      var logger = (sender as ComboBox).SelectedItem as string;
+
+      if (logger != null)
+      {
+        var tenant = TenantFilter.SelectedValue as string;
+        var level = LevelFilter.SelectedValue as string;
+        SetFilter(Filter.Text, tenant, level, logger);
       }
     }
     private void ColumnVisibilityCheck(object sender, RoutedEventArgs e)
@@ -870,7 +908,8 @@ namespace LogViewer
       {
         var tenant = this.TenantFilter.SelectedValue as string;
         var level = this.LevelFilter.SelectedValue as string;
-        this.SetFilter(this.Filter.Text, tenant, level);
+        var logger = this.LoggerFilter.SelectedValue as string;
+        this.SetFilter(this.Filter.Text, tenant, level, logger);
       }
     }
   }
