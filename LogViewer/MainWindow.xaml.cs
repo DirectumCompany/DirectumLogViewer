@@ -543,7 +543,8 @@ namespace LogViewer
 
         result = result || (!string.IsNullOrEmpty(line.Trace) && line.Trace.IndexOf(filter, StringComparison.OrdinalIgnoreCase) > -1) ||
                            (!string.IsNullOrEmpty(line.Pid) && line.Pid.IndexOf(filter, StringComparison.OrdinalIgnoreCase) > -1) ||
-                           (!string.IsNullOrEmpty(line.Level) && line.Level.IndexOf(filter, StringComparison.OrdinalIgnoreCase) > -1);
+                           (!string.IsNullOrEmpty(line.Level) && line.Level.IndexOf(filter, StringComparison.OrdinalIgnoreCase) > -1) ||
+                           (!string.IsNullOrEmpty(line.Logger) && line.Logger.IndexOf(filter, StringComparison.OrdinalIgnoreCase) > -1);
       }
 
 
