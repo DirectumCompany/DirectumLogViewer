@@ -84,6 +84,8 @@
                 <ColumnDefinition Width="auto" />
                 <ColumnDefinition Width="auto" />
                 <ColumnDefinition Width="auto" />
+                <ColumnDefinition Width="auto" />
+                <ColumnDefinition Width="auto" />
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="auto" />
                 <ColumnDefinition Width="auto" />
@@ -102,9 +104,12 @@
 
             <Label  Grid.Column="3" Content="Level" FontStyle="Normal" FontSize="14" VerticalAlignment="Center" Margin="5,0,0,0"/>
             <ComboBox Grid.Column="4" x:Name="LevelFilter" HorizontalAlignment="Left"  VerticalAlignment="Center" FontStyle="Normal" Width="150" Height="24" FontSize="14" SelectionChanged="FilterLevel_SelectionChanged"/>
+            
+            <Label  Grid.Column="5" Content="Logger" FontStyle="Normal" FontSize="14" VerticalAlignment="Center" Margin="5,0,0,0"/>
+            <ComboBox Grid.Column="6" x:Name="LoggerFilter" HorizontalAlignment="Left"  VerticalAlignment="Center" FontStyle="Normal" Width="150" Height="24" FontSize="14" SelectionChanged="FilterLogger_SelectionChanged"/>
 
 
-            <StackPanel Grid.Column="5" Orientation="Vertical" VerticalAlignment="Stretch" Margin="0,2,0,0">
+            <StackPanel Grid.Column="7" Orientation="Vertical" VerticalAlignment="Stretch" Margin="0,2,0,0">
                 <Grid>
                     <TextBox x:Name="Filter" Style="{StaticResource placeHolder}" Tag="Filter.."  Text="" TextWrapping="Wrap" VerticalAlignment="Center" FontSize="14" FontStyle="Normal" Margin="5,0,0,0" TextChanged="Filter_TextChanged" HorizontalAlignment="Stretch" Height="24"/>
                     <Button x:Name="RegexButton" Width="20" Height="20"  HorizontalAlignment="Right" Margin="0,0,2,0" Background="Transparent" BorderThickness="0" Click="RegexButton_Click" >
