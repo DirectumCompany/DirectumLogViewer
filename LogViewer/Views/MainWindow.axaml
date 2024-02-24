@@ -7,7 +7,7 @@
         x:Class="LogViewer.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
         Icon="/Assets/horse-icon.ico"
-        Title="DirectumLogViewer">
+        Title="{Binding WindowTitle, Mode=TwoWay}">
 
     <Design.DataContext>
         <!-- This only sets the DataContext for the previewer in an IDE,
@@ -15,4 +15,45 @@
         <vm:MainWindowViewModel/>
     </Design.DataContext>
 
-</Window>
+	<Grid Margin="10">
+		<Grid.RowDefinitions>
+			<RowDefinition Height="32" />
+			<RowDefinition Height="*" />
+			<RowDefinition Height="auto" />
+			<RowDefinition Height="250" />
+		</Grid.RowDefinitions>
+		<ProgressBar x:Name="ProgressBar" Grid.Row="0" Minimum="0" Maximum="100" Value="0" Height="5" Margin="0,-5,0,0" VerticalAlignment="Top" HorizontalAlignment="Stretch" IsVisible="False"/>
+
+		<!--#region top panel -->
+		<Grid Grid.Row="0" VerticalAlignment="Top" Margin="0,2,0,0" >
+			<Grid.ColumnDefinitions>
+				<ColumnDefinition Width="auto" />
+				<ColumnDefinition Width="auto" />
+				<ColumnDefinition Width="auto" />
+				<ColumnDefinition Width="auto" />
+				<ColumnDefinition Width="auto" />
+				<ColumnDefinition Width="auto" />
+				<ColumnDefinition Width="auto" />
+				<ColumnDefinition Width="*" />
+				<ColumnDefinition Width="auto" />
+				<ColumnDefinition Width="auto" />
+				<ColumnDefinition Width="auto" />
+				<ColumnDefinition Width="auto" />
+				<ColumnDefinition Width="auto" />
+				<ColumnDefinition Width="auto" />
+				<ColumnDefinition Width="auto" />
+				<ColumnDefinition Width="auto" />
+			</Grid.ColumnDefinitions>
+			<ComboBox x:Name="LogFilesComboBox" Grid.Column="0" ItemsSource="{Binding LogFiles}" PlaceholderText="Choose file.." HorizontalAlignment="Left"  VerticalAlignment="Center" Width="305" Height="25" Margin="0,0,0,0" SelectedItem="{Binding SelectedLogFile}">
+				<ComboBox.ItemTemplate>
+				<DataTemplate>
+					<TextBlock Text="{Binding Name}" />
+				</DataTemplate>
+				</ComboBox.ItemTemplate>
+			</ComboBox>
+		</Grid>
+		<!--#endregion-->
+		
+	</Grid>
+
+	</Window>
