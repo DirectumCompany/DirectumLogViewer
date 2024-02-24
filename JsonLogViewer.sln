@@ -5,7 +5,7 @@ VisualStudioVersion = 16.0.31005.135
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LogReader", "LogReader\LogReader.csproj", "{8081160C-85E6-4D46-AFCC-71DF4414FD5F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LogViewer", "LogViewer\LogViewer.csproj", "{B9734E64-AE52-47EE-A8D8-531AD2ACDB38}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LogViewer", "LogViewerWpf\LogViewer.csproj", "{B9734E64-AE52-47EE-A8D8-531AD2ACDB38}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
