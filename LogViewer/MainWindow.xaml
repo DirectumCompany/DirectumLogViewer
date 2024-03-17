@@ -42,6 +42,10 @@
         </Style>
 
         <RoutedUICommand x:Key="SearchTextCommand" Text="Search text"  />
+        <RoutedUICommand x:Key="CopyJsonCommand" Text="Copy as Json"  />
+        <RoutedUICommand x:Key="PasteJsonCommand" Text="Paste Json-log"  />
+        <RoutedUICommand x:Key="SaveAsJsonCommand" Text="Save Json-log"  />
+
 
         <Image x:Key="VisibilityImage" Source ="/Resources/visibility.png" Width="21" Height="21" />
         <Image x:Key="VisibilityOffImage" Source ="/Resources/visibilityOff.png" Width="21" Height="21" />
@@ -61,11 +65,13 @@
 
     <Window.CommandBindings>
         <CommandBinding  Command="{StaticResource SearchTextCommand}" Executed="SearchText"  />
+        <CommandBinding  Command="{StaticResource PasteJsonCommand}" Executed="PasteJsonCommand"  />
     </Window.CommandBindings>
 
     <Window.InputBindings>
         <KeyBinding Key="F" Modifiers="Ctrl" Command="{StaticResource SearchTextCommand}" />
-    </Window.InputBindings>
+        <KeyBinding Key="V" Modifiers="Ctrl+Shift" Command="{StaticResource PasteJsonCommand}" />
+     </Window.InputBindings>
 
     <Grid Margin="10">
         <Grid.RowDefinitions>
@@ -188,16 +194,22 @@
 
             <DataGrid.CommandBindings>
                 <CommandBinding Command="Copy" Executed="CopyCommand" />
+                <CommandBinding Command="{StaticResource CopyJsonCommand}" Executed="CopyJsonCommand" />
+                <CommandBinding Command="{StaticResource SaveAsJsonCommand}" Executed="SaveAsJsonCommand" />
             </DataGrid.CommandBindings>
 
             <DataGrid.ContextMenu>
                 <ContextMenu>
                     <MenuItem Header="Copy" Command="Copy" />
+                    <MenuItem Header="Copy as Json" InputGestureText="Ctrl+Shift+C" Command="{StaticResource CopyJsonCommand}" />
+                    <MenuItem Header="Save as Json-log" InputGestureText="Ctrl+Shift+S" Command="{StaticResource SaveAsJsonCommand}" />
                 </ContextMenu>
             </DataGrid.ContextMenu>
 
             <DataGrid.InputBindings>
                 <KeyBinding Key="C" Modifiers="Control" Command="Copy" />
+                <KeyBinding Key="C" Modifiers="Control+Shift" Command="{StaticResource CopyJsonCommand}" />
+                <KeyBinding Key="S" Modifiers="Ctrl+Shift" Command="{StaticResource SaveAsJsonCommand}" />
             </DataGrid.InputBindings>
 
 
