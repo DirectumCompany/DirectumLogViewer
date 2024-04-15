@@ -167,6 +167,10 @@ namespace LogViewer
     private void InitControls(string[] files)
     {
       LogsFileNames.Items.Clear();
+      HostFilter.Items.Clear();
+
+      HostFilter.Items.Add(new Host(Environment.MachineName));
+      HostFilter.SelectedIndex = 0; 
 
       foreach (var file in files)
         LogsFileNames.Items.Add(new LogFile(file));
