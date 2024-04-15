@@ -10,10 +10,12 @@ namespace LogViewer
   {
     public string Name { get; }
     public string LogsFolder { get; }
-    public Host(string name, string logsFolder = "")
+    public bool IsRemote { get; }
+    public Host(string name, string logsFolder = "", bool isRemote = false)
     {
       Name = name;
       LogsFolder = logsFolder;
+      IsRemote = isRemote;
     }
 
     public override string ToString() => this.Name.ToString();

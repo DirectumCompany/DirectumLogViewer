@@ -169,7 +169,7 @@ namespace LogViewer
       LogsFileNames.Items.Clear();
       HostFilter.Items.Clear();
 
-      HostFilter.Items.Add(new Host(Environment.MachineName));
+      HostFilter.Items.Add(new Host(Environment.MachineName, SettingsWindow.LogsPath));
       HostFilter.SelectedIndex = 0; 
 
       foreach (var file in files)
