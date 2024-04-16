@@ -37,6 +37,8 @@ namespace LogViewer
 
     private const string OpenAction = "OpenAction";
 
+    private const string AddRemoteHostAction = "AddRemoteHost";
+
     private const string All = "All";
 
     private const string IconFileName = "horse.png";
@@ -170,6 +172,7 @@ namespace LogViewer
       HostFilter.Items.Clear();
 
       HostFilter.Items.Add(new Host(Environment.MachineName, SettingsWindow.LogsPath));
+      HostFilter.Items.Add(new Host("Add remote host...", AddRemoteHostAction));
       HostFilter.SelectedIndex = 0; 
 
       foreach (var file in files)
@@ -915,6 +918,83 @@ namespace LogViewer
         var logger = this.LoggerFilter.SelectedValue as string;
         this.SetFilter(this.Filter.Text, tenant, level, logger);
       }
+    }
+
+    private void Host_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+      var comboBox = sender as ComboBox;
+      var selectedItem = comboBox.SelectedItem as Host;
+
+      if (selectedItem != null)
+      {
+        if (selectedItem.LogsFolder == AddRemoteHostAction)
+        {
+          var window = new RemoteHostWindow();
+          if (window.ShowDialog() ?? false)
+          {
+            var host = new Host(window.HostName.Text, isRemote: true);
+            HostFilter.Items.Insert(HostFilter.Items.Count - 1, host);
+            HostFilter.SelectedItem = host;
+          }
+          else
+          {
+            HostFilter.SelectedItem = null;
+            return;
+          }
+        }
+        if (selectedItem.IsRemote)
+        {
+          LogsFileNames.SelectionChanged -= Files_SelectionChanged;
+          LogsFileNames.SelectionChanged += RemoteFiles_SelectionChanged;
+        }
+        else
+        {
+          LogsFileNames.SelectionChanged -= RemoteFiles_SelectionChanged;
+          LogsFileNames.SelectionChanged += Files_SelectionChanged;
+        }
+      }
+    }
+
+    /// <summary>
+    /// Метод подмены файла
+    /// </summary>
+    private void RemoteFiles_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+      var filterValue = Filter.Text;
+      var levelValue = LevelFilter.SelectedValue;
+
+      CloseLogFile();
+
+      var comboBox = sender as ComboBox;
+
+      LogFile selectedItem = comboBox.SelectedItem as LogFile;
+      if (selectedItem == null)
+        return;
+
+      if (selectedItem.FullPath == OpenAction)
+      {
+        var dialog = new CommonOpenFileDialog
+        {
+          IsFolderPicker = false
+        };
+
+        dialog.Filters.Add(new CommonFileDialogFilter("Log Files (*.log)", ".log"));
+
+        if (CommonFileDialogResult.Ok == dialog.ShowDialog())
+          SelectFileToOpen(dialog.FileName);
+        else
+          comboBox.SelectedItem = null;
+
+        return;
+      }
+
+      comboBox.Items.Refresh();
+
+      openedFileFullPath = selectedItem.FullPath;
+      OpenLogFile(openedFileFullPath);
+
+      Filter.Text = filterValue;
+      LevelFilter.SelectedValue = levelValue;
     }
   }
 }
