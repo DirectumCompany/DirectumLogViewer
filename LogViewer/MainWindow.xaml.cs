@@ -17,6 +17,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
 using System.Text.RegularExpressions;
+using SshConfigParser;
 
 namespace LogViewer
 {
@@ -50,6 +51,8 @@ namespace LogViewer
     private readonly List<LogHandler> logHandlers = new List<LogHandler>();
 
     private readonly ObservableCollection<LogLine> logLines = new ObservableCollection<LogLine>();
+
+    private static string SshConfigPath => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".ssh", "config");
 
     private ObservableCollection<LogLine> filteredLogLines;
 
@@ -169,11 +172,6 @@ namespace LogViewer
     private void InitControls(string[] files)
     {
       LogsFileNames.Items.Clear();
-      HostFilter.Items.Clear();
-
-      HostFilter.Items.Add(new Host(Environment.MachineName, SettingsWindow.LogsPath));
-      HostFilter.Items.Add(new Host("Add remote host...", AddRemoteHostAction));
-      HostFilter.SelectedIndex = 0; 
 
       foreach (var file in files)
         LogsFileNames.Items.Add(new LogFile(file));
@@ -183,7 +181,7 @@ namespace LogViewer
       InitTenantFilter();
       InitLevelFilter();
       InitLoggerFilter();
-
+      InitHosts();
       logLinesView = CollectionViewSource.GetDefaultView(logLines);
     }
 
@@ -212,6 +210,19 @@ namespace LogViewer
       LevelFilter.Items.Add("Fatal");
 
       LevelFilter.SelectedValue = All;
+    }
+
+    private void InitHosts()
+    {
+      HostFilter.Items.Clear();
+      HostFilter.Items.Add(new Host(Environment.MachineName, SettingsWindow.LogsPath));
+
+      var config = SshConfig.ParseFile(SshConfigPath);
+      foreach (var host in config.nodes)
+        HostFilter.Items.Add(new Host(host.Value, isRemote: true));
+
+      HostFilter.Items.Add(new Host("Add remote host...", AddRemoteHostAction));
+      HostFilter.SelectedIndex = 0;
     }
 
     private void SetNotificationActivated()

@@ -1,16 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using SshConfigParser;
+using System;
+using System.IO;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
 
 namespace LogViewer
 {
@@ -19,6 +10,7 @@ namespace LogViewer
   /// </summary>
   public partial class RemoteHostWindow : Window
   {
+    private static string SshConfigPath => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".ssh", "config");
     public RemoteHostWindow()
     {
       InitializeComponent();
@@ -26,6 +18,24 @@ namespace LogViewer
 
     private void Accept_Click(object sender, RoutedEventArgs e)
     {
+      var result = SshConfig.ParseFile(SshConfigPath);
+      var host = new SshHost
+      {
+        Host = this.HostName.Text,
+        HostName = this.HostName.Text,
+        User = this.Username.Text,
+      };
+
+      var pass = this.Password.Text;
+      if (string.IsNullOrWhiteSpace(pass))
+        host.IdentityFile = this.IdentityFile.Text;
+      else
+        host.Properties.Add("#PASS", pass);
+       
+      host.Properties.Add("#LOGSPATH", this.LogsPath.Text);
+      result.Add(host);
+      File.WriteAllTextAsync(SshConfigPath, result.ToString());
+
       this.DialogResult = true;
     }
   }
