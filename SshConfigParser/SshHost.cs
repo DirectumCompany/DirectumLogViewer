@@ -21,6 +21,15 @@ namespace SshConfigParser
     }
 
     /// <summary>
+    /// Password for the user.
+    /// </summary>
+    public string Password
+    {
+      get => this[nameof(Password)]?.ToString();
+      set => this[nameof(Password)] = value;
+    }
+
+    /// <summary>
     /// The host alias
     /// </summary>
     public string Host
@@ -32,10 +41,10 @@ namespace SshConfigParser
     /// <summary>
     /// Full host name
     /// </summary>
-    public string HostName
+    public string Name
     {
-      get => this[nameof(HostName)]?.ToString();
-      set => this[nameof(HostName)] = value;
+      get => this[nameof(Name)]?.ToString();
+      set => this[nameof(Name)] = value;
     }
 
     /// <summary>
@@ -52,8 +61,26 @@ namespace SshConfigParser
     /// </summary>
     public string Port
     {
-      get => this[nameof(Port)]?.ToString();
+      get => this[nameof(Port)]?.ToString() ?? "22";
       set => this[nameof(Port)] = value;
+    }
+
+    /// <summary>
+    /// Logs folder
+    /// </summary>
+    public string LogsFolder
+    {
+      get => this[nameof(LogsFolder)]?.ToString();
+      set => this[nameof(LogsFolder)] = value;
+    }
+
+    /// <summary>
+    /// Logs folder
+    /// </summary>
+    public bool IsRemote
+    {
+      get => (bool)(this[nameof(IsRemote)] ?? true);
+      set => this[nameof(IsRemote)] = value;
     }
 
     /// <summary>
@@ -77,5 +104,7 @@ namespace SshConfigParser
     /// Keys of all items in the SSH host.
     /// </summary>
     public IEnumerable<string> Keys => Properties.Keys;
+
+    public override string ToString() => this.Name;
   }
 }

@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace LogViewer
 {
-  internal class Host
+  public class Host
   {
     public string Name { get; }
     public string LogsFolder { get; }
@@ -18,6 +18,6 @@ namespace LogViewer
       IsRemote = isRemote;
     }
 
-    public override string ToString() => this.Name.ToString();
+    public override string ToString() => this.Name;
   }
 }

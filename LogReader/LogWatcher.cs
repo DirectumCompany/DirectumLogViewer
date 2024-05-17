@@ -18,16 +18,16 @@ namespace LogReader
     public delegate void FileReCreatedHandler();
     public event FileReCreatedHandler FileReCreated;
 
-    private readonly object readLock = new object();
-    private long fileLength;
-    private long position;
-    private readonly string filePath;
-    private Timer timer;
+    protected readonly object readLock = new object();
+    protected long fileLength;
+    protected long position;
+    protected readonly string filePath;
+    protected Timer timer;
 
     /// <summary>
     /// Кол-во max строк для блока записи.
     /// </summary>
-    private const int LineBlockSize = 500;
+    protected const int LineBlockSize = 500;
 
     /// <summary>
     /// ctor с созданием наблюдателем за файлом по указанному пути. Тригер на изменение файла.
@@ -62,7 +62,7 @@ namespace LogReader
     /// <summary>
     /// Чтение файла. При повторном срабатывании читает файл с прошлого места окончания чтения.
     /// </summary>
-    public void ReadToEndLine()
+    public virtual void ReadToEndLine()
     {
       lock (readLock)
       {
@@ -102,10 +102,10 @@ namespace LogReader
       }
     }
 
-    private void OnTimedEvent(Object source, ElapsedEventArgs e)
+    protected void OnTimedEvent(Object source, ElapsedEventArgs e)
     {
       ReadToEndLine();
-      timer.Start();
+      timer?.Start();
     }
 
     /// <summary>
@@ -114,7 +114,7 @@ namespace LogReader
     /// </summary>
     /// <param name="lines">Новые прочитанные строки.</param>
     /// <param name="streamReader">Экземпляр reader для работы в обработчике.</param>
-    private void InvokeBlockNewLinesEvent(List<string> lines, StreamReader streamReader)
+    protected void InvokeBlockNewLinesEvent(List<string> lines, StreamReader streamReader)
     {
       var progress = fileLength == 0 ? 100 : 100 * streamReader.BaseStream.Position / fileLength;
       BlockNewLines?.Invoke(lines, progress);
@@ -123,7 +123,7 @@ namespace LogReader
     /// <summary>
     /// Обработчик закрытия файлов.
     /// </summary>
-    public void Dispose()
+    public virtual void Dispose()
     {
       if (timer != null)
       {
