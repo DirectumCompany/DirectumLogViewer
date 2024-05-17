@@ -19,6 +19,7 @@ namespace LogViewer
     private const string PasswordKey = "Password";
     private const string IdentityFilePathKey = "IdentityFile";
     private const string LogsPathKey = "LogsFolder";
+    private const string PortKey = "Port";
 
     public RemoteHostWindow()
     {
@@ -40,7 +41,8 @@ namespace LogViewer
       key.SetValue(UserKey, host.User);
       key.SetValue(NameKey, host.Name);
       key.SetValue(LogsPathKey, this.LogsPath.Text);
-      var pass = this.Password.Text;
+      key.SetValue(PortKey, this.Port.Text);
+      var pass = this.Password.Password;
       if (string.IsNullOrWhiteSpace(pass))
       {
         host.IdentityFile = this.IdentityFile.Text;

@@ -67,11 +67,5 @@ namespace LogReader
         }
       }
     }
-
-    public override void Dispose()
-    {
-      
-      base.Dispose();
-    }
   }
 }

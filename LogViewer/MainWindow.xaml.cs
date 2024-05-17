@@ -965,8 +965,9 @@ namespace LogViewer
               IsRemote = true, 
               Host = window.Host.Text,
               User = window.Username.Text,
+              Port = window.Port.Text,
               LogsFolder = window.LogsPath.Text,
-              Password = window.Password.Text,
+              Password = window.Password.Password,
               IdentityFile = window.IdentityFile.Text
             };
             HostFilter.Items.Insert(HostFilter.Items.Count - 1, host);
@@ -982,7 +983,7 @@ namespace LogViewer
         string[] files;
         if (selectedItem.IsRemote)
         {
-          connectionInfo = new ConnectionInfo(selectedItem.Host, selectedItem.User, new PasswordAuthenticationMethod(selectedItem.User, selectedItem.Password));
+          connectionInfo = new ConnectionInfo(selectedItem.Host, int.Parse(selectedItem.Port), selectedItem.User, new PasswordAuthenticationMethod(selectedItem.User, selectedItem.Password));
           using (var client = new SftpClient(connectionInfo))
           {
             client.Connect();

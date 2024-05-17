@@ -5,9 +5,11 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:LogViewer"
         mc:Ignorable="d"
-        Title="Add new remote host" Height="420" Width="400" ResizeMode="NoResize" WindowStartupLocation="CenterScreen">
+        Title="Add new remote host" Height="479" Width="400" ResizeMode="NoResize" WindowStartupLocation="CenterScreen">
     <Grid>
       <Grid.RowDefinitions>
+        <RowDefinition Height="30" />
+        <RowDefinition Height="25" />
         <RowDefinition Height="30" />
         <RowDefinition Height="25" />
         <RowDefinition Height="30" />
@@ -31,10 +33,12 @@
     <Label Grid.Row="6" Content="Identity file" FontStyle="Normal" FontSize="14" VerticalAlignment="Top" Width="350" Margin="0,0,0,0"/>
     <TextBox Grid.Row="7" Name="IdentityFile" HorizontalAlignment="Stretch" Margin="0,0,0,0" Width ="350"  FontSize="14" FontStyle="Normal"/>
     <Label Grid.Row="8" Content="Password" FontStyle="Normal" FontSize="14" VerticalAlignment="Top" Width="350" Margin="0,0,0,0"/>
-    <TextBox Grid.Row="9" Name="Password" HorizontalAlignment="Stretch" Margin="0,0,0,0" Width ="350"  FontSize="14" FontStyle="Normal"/>
+    <PasswordBox Grid.Row="9" Name="Password" HorizontalAlignment="Stretch" Margin="0,0,0,0" Width ="350"  FontSize="14" FontStyle="Normal"/>
     <Label Grid.Row="10" Content="Logs directory" FontStyle="Normal" FontSize="14" VerticalAlignment="Top" Width="350" Margin="0,0,0,0"/>
     <TextBox Grid.Row="11" Name="LogsPath" HorizontalAlignment="Stretch" Margin="0,0,0,0" Width ="350"  FontSize="14" FontStyle="Normal"/>
-    <WrapPanel Grid.Row="12" HorizontalAlignment="Right" Margin="0,0,0,0" VerticalAlignment="Bottom">
+    <Label Grid.Row="12" Content="Port" FontStyle="Normal" FontSize="14" VerticalAlignment="Top" Width="350" Margin="0,0,0,0"/>
+    <TextBox Grid.Row="13" Name="Port" Text="22" HorizontalAlignment="Stretch" Margin="0,0,0,0" Width ="350"  FontSize="14" FontStyle="Normal"/>
+    <WrapPanel Grid.Row="14" HorizontalAlignment="Right" Margin="0,0,0,0" VerticalAlignment="Bottom">
       <Button  IsDefault="False" Click="Accept_Click" MinWidth="60" Margin="0,10,18,0" Content="OK" Width="34"/>
     </WrapPanel>
   </Grid>
