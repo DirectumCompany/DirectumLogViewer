@@ -37,11 +37,12 @@ namespace LogViewer
 
       var host = new SshHost
       {
-        Host = this.HostName.Text,        
-        HostName = this.Host.Text,
+        Host = this.Host.Text,        
+        HostName = this.HostName.Text,
         User = this.Username.Text,
       };
 
+      host.LogsFolder = this.LogsPath.Text;
       using var key = Registry.CurrentUser.CreateSubKey(RegKey + host.Host);
       key.SetValue(HostKey, host.Host);
       key.SetValue(UserKey, host.User);

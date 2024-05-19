@@ -21,6 +21,7 @@ using SshConfigParser;
 using Renci.SshNet;
 using Microsoft.Win32;
 using System.Globalization;
+using WinRT;
 
 namespace LogViewer
 {
@@ -42,6 +43,8 @@ namespace LogViewer
     private const string OpenAction = "OpenAction";
 
     private const string AddRemoteHostAction = "AddRemoteHost";
+
+    private const string AddRemoteHostActionValue = "Add remote host...";
 
     private const string All = "All";
 
@@ -70,7 +73,7 @@ namespace LogViewer
     private string openedFileFullPath;
 
     private readonly string[] hiddenColumns = { "Pid", "Trace", "Tenant" };
-    private IEnumerable<SshHost> KnownHosts { get; set; }
+    private List<SshHost> KnownHosts { get; set; }
 
     private const string RegKey = @"SOFTWARE\JsonLogViewerSettings\RemoteHost\";
 
@@ -232,7 +235,7 @@ namespace LogViewer
       foreach (var host in KnownHosts)
         HostFilter.Items.Add(host);
 
-      HostFilter.Items.Add(new SshHost { Host = "Add remote host...", LogsFolder = AddRemoteHostAction, IsRemote = false });
+      HostFilter.Items.Add(new SshHost { Host = AddRemoteHostActionValue, LogsFolder = AddRemoteHostAction, IsRemote = false });
       HostFilter.SelectedIndex = 0;
     }
 
@@ -1008,7 +1011,7 @@ namespace LogViewer
       }
     }
 
-    private IEnumerable<SshHost> GetHostsFromRegistry()
+    private List<SshHost> GetHostsFromRegistry()
     {
       var hostsProperties = Registry.CurrentUser.OpenSubKey(RegKey).GetSubKeyNames();
       var result = new List<SshHost>();
@@ -1038,6 +1041,16 @@ namespace LogViewer
       }
 
       return host;
+    }
+
+    private void TextBlock_MouseRightButtonUp(object sender, MouseButtonEventArgs e)
+    {
+      var host = sender as TextBlock;
+      if (host.Text != Environment.MachineName && host.Text != AddRemoteHostActionValue)
+      {
+        Registry.CurrentUser.DeleteSubKeyTree(Path.Combine(RegKey, host.Text));
+        InitHosts();
+      }
     }
   }
 }
