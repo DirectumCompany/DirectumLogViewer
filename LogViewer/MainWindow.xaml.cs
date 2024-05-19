@@ -983,7 +983,8 @@ namespace LogViewer
         string[] files;
         if (selectedItem.IsRemote)
         {
-          connectionInfo = new ConnectionInfo(selectedItem.Host, int.Parse(selectedItem.Port), selectedItem.User, new PasswordAuthenticationMethod(selectedItem.User, selectedItem.Password));
+          var pk = new PrivateKeyFile(selectedItem.IdentityFile);
+          connectionInfo = new ConnectionInfo(selectedItem.Host, int.Parse(selectedItem.Port), selectedItem.User, /*new PasswordAuthenticationMethod(selectedItem.User, selectedItem.Password),*/ new PrivateKeyAuthenticationMethod(selectedItem.User, pk));
           using (var client = new SftpClient(connectionInfo))
           {
             client.Connect();

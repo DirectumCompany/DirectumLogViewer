@@ -1,4 +1,5 @@
 ﻿using Microsoft.Win32;
+using Microsoft.WindowsAPICodePack.Dialogs;
 using SshConfigParser;
 using System;
 using System.IO;
@@ -20,6 +21,7 @@ namespace LogViewer
     private const string IdentityFilePathKey = "IdentityFile";
     private const string LogsPathKey = "LogsFolder";
     private const string PortKey = "Port";
+    private readonly string InitialSshKeyDirectory = $"C:\\Users\\{Environment.UserName}\\.ssh";
 
     public RemoteHostWindow()
     {
@@ -55,6 +57,18 @@ namespace LogViewer
    //   result.Add(host);
     //  File.WriteAllTextAsync(SshConfigPath, result.ToString());
       this.DialogResult = true;
+    }
+
+    private void IdentityFileButton_Click(object sender, RoutedEventArgs e)
+    {
+      var dialog = new OpenFileDialog();
+      dialog.Filter = "All files (*.*)|*.*";
+      dialog.InitialDirectory = InitialSshKeyDirectory;
+
+      if (dialog.ShowDialog() ?? false)
+        IdentityFile.Text = dialog.FileName;
+
+      this.Focus();
     }
   }
 }

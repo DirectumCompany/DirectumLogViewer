@@ -31,7 +31,14 @@
     <Label Grid.Row="4" Content="User name" FontStyle="Normal" FontSize="14" VerticalAlignment="Top" Width="350" Margin="0,0,0,0"/>
     <TextBox Grid.Row="5" Name="Username" HorizontalAlignment="Stretch" Margin="0,0,0,0" Width ="350"  FontSize="14" FontStyle="Normal"/>
     <Label Grid.Row="6" Content="Identity file" FontStyle="Normal" FontSize="14" VerticalAlignment="Top" Width="350" Margin="0,0,0,0"/>
-    <TextBox Grid.Row="7" Name="IdentityFile" HorizontalAlignment="Stretch" Margin="0,0,0,0" Width ="350"  FontSize="14" FontStyle="Normal"/>
+    <Grid Grid.Row="7" VerticalAlignment="Center" Margin="18,0,0,0">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="330" />
+        <ColumnDefinition Width="20"/>
+      </Grid.ColumnDefinitions>
+      <TextBox Grid.Column="0" Name="IdentityFile"  Margin="0,0,0,0" FontSize="14" FontStyle="Normal" Height="25" HorizontalAlignment="Stretch"/>
+      <Button Grid.Column="1" Name="IdentityFileButton" Margin="0,0,0,0" FontSize="14" FontStyle="Normal" Height="25" HorizontalAlignment="Stretch" Content="..." Click="IdentityFileButton_Click"/>
+    </Grid>
     <Label Grid.Row="8" Content="Password" FontStyle="Normal" FontSize="14" VerticalAlignment="Top" Width="350" Margin="0,0,0,0"/>
     <PasswordBox Grid.Row="9" Name="Password" HorizontalAlignment="Stretch" Margin="0,0,0,0" Width ="350"  FontSize="14" FontStyle="Normal"/>
     <Label Grid.Row="10" Content="Logs directory" FontStyle="Normal" FontSize="14" VerticalAlignment="Top" Width="350" Margin="0,0,0,0"/>
