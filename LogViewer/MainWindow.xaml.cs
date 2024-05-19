@@ -20,8 +20,6 @@ using System.Text.RegularExpressions;
 using SshConfigParser;
 using Renci.SshNet;
 using Microsoft.Win32;
-using System.Globalization;
-using WinRT;
 
 namespace LogViewer
 {
@@ -49,6 +47,7 @@ namespace LogViewer
     private const string All = "All";
 
     private const string IconFileName = "horse.png";
+
     private const int GridUpdatePeriod = 1000;
 
     // UseRegex is binding proprety
@@ -73,6 +72,7 @@ namespace LogViewer
     private string openedFileFullPath;
 
     private readonly string[] hiddenColumns = { "Pid", "Trace", "Tenant" };
+
     private List<SshHost> KnownHosts { get; set; }
 
     private const string RegKey = @"SOFTWARE\JsonLogViewerSettings\RemoteHost\";
