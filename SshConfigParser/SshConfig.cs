@@ -112,7 +112,7 @@ namespace SshConfigParser
 
       foreach (var key in keys)
       {
-        if (key == "Password")
+        if (key == "Password" || key == "LogsFolder")
           continue;
         var line = new ConfigNode
         {
