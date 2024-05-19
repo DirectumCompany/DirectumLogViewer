@@ -31,7 +31,7 @@ namespace LogReader
         using (var client = new SftpClient(info))
         {
           client.Connect();
-          using var fileStream = client.OpenRead(this.filePath);//new FileStream(this.filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+          using var fileStream = client.OpenRead(this.filePath);
           using var streamReader = new StreamReader(fileStream);
           long current_length = streamReader.BaseStream.Length;
           if (current_length < fileLength)
