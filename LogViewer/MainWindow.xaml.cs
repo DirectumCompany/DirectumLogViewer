@@ -65,8 +65,6 @@ namespace LogViewer
 
     private LogWatcher logWatcher;
 
-  //  private RemoteLogWatcher remoteLogWatcher;
-
     private ScrollViewer gridScrollViewer;
 
     private string openedFileFullPath;
@@ -227,14 +225,14 @@ namespace LogViewer
     private void InitHosts()
     {
       HostFilter.Items.Clear();
-      HostFilter.Items.Add(new SshHost { Name = Environment.MachineName, LogsFolder = SettingsWindow.LogsPath, IsRemote = false });
+      HostFilter.Items.Add(new SshHost { Host = Environment.MachineName, LogsFolder = SettingsWindow.LogsPath, IsRemote = false });
       KnownHosts = GetHostsFromRegistry();
 
      // var config = SshConfig.ParseFile(SshConfigPath);
       foreach (var host in KnownHosts)
         HostFilter.Items.Add(host);
 
-      HostFilter.Items.Add(new SshHost { Name = "Add remote host...", LogsFolder = AddRemoteHostAction, IsRemote = false });
+      HostFilter.Items.Add(new SshHost { Host = "Add remote host...", LogsFolder = AddRemoteHostAction, IsRemote = false });
       HostFilter.SelectedIndex = 0;
     }
 
@@ -961,7 +959,7 @@ namespace LogViewer
           {
             var host = new SshHost 
             { 
-              Name = window.Name.Text, 
+              HostName = window.HostName.Text, 
               IsRemote = true, 
               Host = window.Host.Text,
               User = window.Username.Text,
@@ -983,8 +981,16 @@ namespace LogViewer
         string[] files;
         if (selectedItem.IsRemote)
         {
-          var pk = new PrivateKeyFile(selectedItem.IdentityFile);
-          connectionInfo = new ConnectionInfo(selectedItem.Host, int.Parse(selectedItem.Port), selectedItem.User, /*new PasswordAuthenticationMethod(selectedItem.User, selectedItem.Password),*/ new PrivateKeyAuthenticationMethod(selectedItem.User, pk));
+          var authMethods = new List<AuthenticationMethod>();
+          if (!string.IsNullOrEmpty(selectedItem.IdentityFile))
+          {
+            var pk = new PrivateKeyFile(selectedItem.IdentityFile);
+            authMethods.Add(new PrivateKeyAuthenticationMethod(selectedItem.User, pk));
+          }      
+          if (!string.IsNullOrEmpty(selectedItem.Password))
+            authMethods.Add(new PasswordAuthenticationMethod(selectedItem.User, selectedItem.Password));
+
+          connectionInfo = new ConnectionInfo(selectedItem.HostName, int.Parse(selectedItem.Port), selectedItem.User, authMethods.ToArray());
           using (var client = new SftpClient(connectionInfo))
           {
             client.Connect();
@@ -1022,7 +1028,7 @@ namespace LogViewer
         switch(property)
         {
           case "Host": host.Host = key.GetValue(property)?.ToString(); break;
-          case "Name": host.Name = key.GetValue(property)?.ToString(); break;
+          case "Name": host.HostName = key.GetValue(property)?.ToString(); break;
           case "LogsFolder": host.LogsFolder = key.GetValue(property)?.ToString(); ; break;
           case "User": host.User = key.GetValue(property)?.ToString(); ; break;
           case "Password": host.Password = key.GetValue(property)?.ToString(); ; break;

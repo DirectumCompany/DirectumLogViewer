@@ -41,10 +41,10 @@ namespace SshConfigParser
     /// <summary>
     /// Full host name
     /// </summary>
-    public string Name
+    public string HostName
     {
-      get => this[nameof(Name)]?.ToString();
-      set => this[nameof(Name)] = value;
+      get => this[nameof(HostName)]?.ToString();
+      set => this[nameof(HostName)] = value;
     }
 
     /// <summary>
@@ -105,6 +105,6 @@ namespace SshConfigParser
     /// </summary>
     public IEnumerable<string> Keys => Properties.Keys;
 
-    public override string ToString() => this.Name;
+    public override string ToString() => this.Host;
   }
 }

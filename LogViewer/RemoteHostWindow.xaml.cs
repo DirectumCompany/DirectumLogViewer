@@ -30,32 +30,43 @@ namespace LogViewer
 
     private void Accept_Click(object sender, RoutedEventArgs e)
     {
-     // var result = SshConfig.ParseFile(SshConfigPath);
+      var pass = this.Password.Password;
+      var passKey = this.IdentityFile.Text;
+      if (string.IsNullOrEmpty(passKey) && string.IsNullOrEmpty(pass))
+        throw new Exception("Wrong credentials");
+
       var host = new SshHost
       {
-        Host = this.Host.Text,
-        Name = this.Name.Text,
+        Host = this.HostName.Text,        
+        HostName = this.Host.Text,
         User = this.Username.Text,
       };
 
-      using var key = Registry.CurrentUser.CreateSubKey(RegKey + host.Name);
+      using var key = Registry.CurrentUser.CreateSubKey(RegKey + host.Host);
       key.SetValue(HostKey, host.Host);
       key.SetValue(UserKey, host.User);
-      key.SetValue(NameKey, host.Name);
+      key.SetValue(NameKey, host.HostName);
       key.SetValue(LogsPathKey, this.LogsPath.Text);
       key.SetValue(PortKey, this.Port.Text);
-      var pass = this.Password.Password;
-      if (string.IsNullOrWhiteSpace(pass))
+      if (!string.IsNullOrEmpty(pass))
       {
-        host.IdentityFile = this.IdentityFile.Text;
+        key.SetValue(PasswordKey, pass);
+        host.Password = pass;
+      }
+      if (!string.IsNullOrEmpty(passKey))
+      {
+        host.IdentityFile = passKey;
         key.SetValue(IdentityFilePathKey, host.IdentityFile);
       }
-      else
-        key.SetValue(PasswordKey, pass);
 
       key.Close();
-   //   result.Add(host);
-    //  File.WriteAllTextAsync(SshConfigPath, result.ToString());
+      if (AddToConfig.IsChecked ?? false)
+      {
+        var result = SshConfig.ParseFile(SshConfigPath);
+        result.Add(host);
+        File.WriteAllTextAsync(SshConfigPath, result.ToString());
+      }
+
       this.DialogResult = true;
     }
 

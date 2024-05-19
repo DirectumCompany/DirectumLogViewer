@@ -24,10 +24,10 @@
         <RowDefinition Height="25" />
         <RowDefinition Height="35" />
     </Grid.RowDefinitions>
-    <Label Grid.Row="0" Content="Name" FontStyle="Normal" FontSize="14" VerticalAlignment="Top" Width="350" Margin="0,0,0,0"/>
-    <TextBox Grid.Row="1" Name="Name" HorizontalAlignment="Stretch" Margin="0,0,0,0" Width ="350"  FontSize="14" FontStyle="Normal"/>
-    <Label Grid.Row="2" Content="Host" FontStyle="Normal" FontSize="14" VerticalAlignment="Top" Width="350" Margin="0,0,0,0"/>
-    <TextBox Grid.Row="3" Name="Host" HorizontalAlignment="Stretch" Margin="0,0,0,0" Width ="350"  FontSize="14" FontStyle="Normal"/>
+    <Label Grid.Row="0" Content="Host" FontStyle="Normal" FontSize="14" VerticalAlignment="Top" Width="350" Margin="0,0,0,0"/>
+    <TextBox Grid.Row="1" Name="Host" HorizontalAlignment="Stretch" Margin="0,0,0,0" Width ="350"  FontSize="14" FontStyle="Normal"/>
+    <Label Grid.Row="2" Content="Host name" FontStyle="Normal" FontSize="14" VerticalAlignment="Top" Width="350" Margin="0,0,0,0"/>
+    <TextBox Grid.Row="3" Name="HostName" HorizontalAlignment="Stretch" Margin="0,0,0,0" Width ="350"  FontSize="14" FontStyle="Normal"/>
     <Label Grid.Row="4" Content="User name" FontStyle="Normal" FontSize="14" VerticalAlignment="Top" Width="350" Margin="0,0,0,0"/>
     <TextBox Grid.Row="5" Name="Username" HorizontalAlignment="Stretch" Margin="0,0,0,0" Width ="350"  FontSize="14" FontStyle="Normal"/>
     <Label Grid.Row="6" Content="Identity file" FontStyle="Normal" FontSize="14" VerticalAlignment="Top" Width="350" Margin="0,0,0,0"/>
@@ -45,6 +45,7 @@
     <TextBox Grid.Row="11" Name="LogsPath" HorizontalAlignment="Stretch" Margin="0,0,0,0" Width ="350"  FontSize="14" FontStyle="Normal"/>
     <Label Grid.Row="12" Content="Port" FontStyle="Normal" FontSize="14" VerticalAlignment="Top" Width="350" Margin="0,0,0,0"/>
     <TextBox Grid.Row="13" Name="Port" Text="22" HorizontalAlignment="Stretch" Margin="0,0,0,0" Width ="350"  FontSize="14" FontStyle="Normal"/>
+    <CheckBox Grid.Row="14" Content="Add host to ssh config" Margin="18,5,0,0" Name="AddToConfig"/>
     <WrapPanel Grid.Row="14" HorizontalAlignment="Right" Margin="0,0,0,0" VerticalAlignment="Bottom">
       <Button  IsDefault="False" Click="Accept_Click" MinWidth="60" Margin="0,10,18,0" Content="OK" Width="34"/>
     </WrapPanel>

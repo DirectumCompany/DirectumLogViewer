@@ -112,6 +112,8 @@ namespace SshConfigParser
 
       foreach (var key in keys)
       {
+        if (key == "Password")
+          continue;
         var line = new ConfigNode
         {
           Type = NodeType.Directive,
