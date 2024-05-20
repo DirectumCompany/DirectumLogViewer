@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading.Tasks;
 using System.Timers;
 
 namespace LogReader
@@ -19,7 +20,7 @@ namespace LogReader
     public event FileReCreatedHandler FileReCreated;
 
     protected readonly object readLock = new object();
-    protected long fileLength;
+    protected long fileLength = 0;
     protected long position;
     protected readonly string filePath;
     protected Timer timer;
@@ -36,7 +37,6 @@ namespace LogReader
     public LogWatcher(string filePath)
     {
       this.filePath = filePath;
-      fileLength = 0;
     }
 
     /// <summary>
@@ -66,7 +66,7 @@ namespace LogReader
     {
       lock (readLock)
       {
-        using var fileStream = new FileStream(this.filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+        using var fileStream = Task.Run(() => new FileStream(this.filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)).GetAwaiter().GetResult();
         using var streamReader = new StreamReader(fileStream);
         long current_length = streamReader.BaseStream.Length;
         if (current_length < fileLength)
@@ -123,7 +123,7 @@ namespace LogReader
     /// <summary>
     /// Обработчик закрытия файлов.
     /// </summary>
-    public void Dispose()
+    public virtual void Dispose()
     {
       if (timer != null)
       {
@@ -131,6 +131,5 @@ namespace LogReader
         timer = null;
       }
     }
-
   }
 }
