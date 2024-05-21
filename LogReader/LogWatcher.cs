@@ -123,7 +123,7 @@ namespace LogReader
     /// <summary>
     /// Обработчик закрытия файлов.
     /// </summary>
-    public void Dispose()
+    public virtual void Dispose()
     {
       if (timer != null)
       {
