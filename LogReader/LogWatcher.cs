@@ -16,7 +16,7 @@ namespace LogReader
     public event BlockNewLinesHandler BlockNewLines;
 
     public delegate void FileReCreatedHandler();
-    public event FileReCreatedHandler FileReCreated;
+    public virtual event FileReCreatedHandler FileReCreated;
 
     protected readonly object readLock = new object();
     protected long fileLength;

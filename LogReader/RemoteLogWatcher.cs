@@ -11,9 +11,7 @@ namespace LogReader
 {
   public class RemoteLogWatcher : LogWatcher
   {
-    public new delegate void FileReCreatedHandler();
-    public new event FileReCreatedHandler FileReCreated;
-    private ConnectionInfo info;
+    public override event FileReCreatedHandler FileReCreated;
     private SftpClient client;
 
     /// <summary>
