@@ -384,7 +384,6 @@ namespace LogViewer
       }
 
       comboBox.Items.Refresh();
-
       openedFileFullPath = selectedItem.FullPath;
       OpenLogFile(openedFileFullPath);
 
@@ -418,6 +417,7 @@ namespace LogViewer
 
           foreach (var logLine in convertedLogLines)
           {
+            logLine.NumLine = logLines.Count;
             logLines.Add(logLine);
 
             if (filteredLogLines != null)
@@ -912,5 +912,84 @@ namespace LogViewer
         this.SetFilter(this.Filter.Text, tenant, level, logger);
       }
     }
+
+    #region copy-paste-save-json-log
+    public StringBuilder ReadOriginalSelectedLines()
+    {
+      var currentCurs = Mouse.OverrideCursor;
+      Mouse.OverrideCursor = Cursors.Wait;
+
+      var sb = new StringBuilder();
+
+      long[] indexes = new long[LogsGrid.SelectedItems.Count];
+      var i = 0;
+      foreach (var item in LogsGrid.SelectedItems)
+      {
+        var logLine = (LogLine)item;
+        indexes[i] = logLine.NumLine;
+        i++;
+      }
+
+      string[] f;
+
+      try
+      {
+
+        FileInfo log = new FileInfo(openedFileFullPath);
+        using (var streamReader = new StreamReader(log.Open(FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+        {
+          string text = streamReader.ReadToEnd();
+          f = text.Split(Environment.NewLine);
+        }
+
+        for (var j = 0; j < indexes.Count(); j++)
+          if (f.Count() > indexes[j])
+            sb.AppendLine(f[indexes[j]]);
+      }
+      catch (Exception ex)
+      {
+        MessageBox.Show(ex.Message);
+      }
+
+
+      Mouse.OverrideCursor = currentCurs;
+      return sb;
+    }
+
+    private void CopyJsonCommand(object sender, ExecutedRoutedEventArgs e)
+    {
+      var sb = ReadOriginalSelectedLines();
+      Clipboard.SetText(sb.ToString());
+    }
+
+    private void SaveAsJsonCommand(object sender, ExecutedRoutedEventArgs e)
+    {
+      var dialog = new Microsoft.Win32.SaveFileDialog();
+      dialog.Filter = "Log-files(*.log)|*.log";
+      var result = dialog.ShowDialog(this);
+      if (!(bool)result)
+        return;
+      var sb = ReadOriginalSelectedLines();
+      File.WriteAllText(dialog.FileName, sb.ToString());
+    }
+
+    private void PasteJsonCommand(object sender, ExecutedRoutedEventArgs e)
+    {
+      string tmp;
+      try
+      {
+        tmp = Path.GetTempFileName();
+      }
+      catch (IOException)
+      {
+        MessageBox.Show("Удалите временные файлы вида tmp????.tmp", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+        return;
+      }
+      File.WriteAllText(tmp, Clipboard.GetText());
+      var logFile = new LogFile(tmp);
+      LogsFileNames.Items.Insert(LogsFileNames.Items.Count - 1, logFile);
+      LogsFileNames.SelectedItem = logFile;
+    }
+    #endregion
   }
 }
