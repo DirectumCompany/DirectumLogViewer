@@ -1013,10 +1013,11 @@ namespace LogViewer
 
     private List<SshHost> GetHostsFromRegistry()
     {
-      var hostsProperties = Registry.CurrentUser.OpenSubKey(RegKey).GetSubKeyNames();
+      var hostsProperties = Registry.CurrentUser.OpenSubKey(RegKey)?.GetSubKeyNames();
       var result = new List<SshHost>();
-      foreach (var hostProperties in hostsProperties)   
-        result.Add(ParseHost(RegKey + hostProperties));
+      if (hostsProperties != null)
+        foreach (var hostProperties in hostsProperties)
+          result.Add(ParseHost(RegKey + hostProperties));
 
       return result;
     }
