@@ -20,6 +20,7 @@ using System.Text.RegularExpressions;
 using SshConfigParser;
 using Renci.SshNet;
 using Microsoft.Win32;
+using System.Net.Sockets;
 
 namespace LogViewer
 {
@@ -231,7 +232,6 @@ namespace LogViewer
       HostFilter.Items.Add(new SshHost { Host = Environment.MachineName, LogsFolder = SettingsWindow.LogsPath, IsRemote = false });
       KnownHosts = GetHostsFromRegistry();
 
-     // var config = SshConfig.ParseFile(SshConfigPath);
       foreach (var host in KnownHosts)
         HostFilter.Items.Add(host);
 
@@ -996,9 +996,30 @@ namespace LogViewer
           connectionInfo = new ConnectionInfo(selectedItem.HostName, int.Parse(selectedItem.Port), selectedItem.User, authMethods.ToArray());
           using (var client = new SftpClient(connectionInfo))
           {
-            client.Connect();
-            files = client.ListDirectory(selectedItem.LogsFolder)?.Where(x => x.Name.Contains(".log"))?.Select(x => x.FullName).ToArray();
-            client.Disconnect();
+            try
+            {
+              client.Connect();
+              files = client.ListDirectory(selectedItem.LogsFolder)?.Where(x => x.Name.Contains(".log"))?.Select(x => x.FullName).ToArray();
+              client.Disconnect();
+            }
+            catch (SocketException ex)
+            {
+              MessageBox.Show(ex.ToString(), "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+              var removedItemIndex = HostFilter.Items.Count - 2;
+              var removedItem = HostFilter.Items[removedItemIndex];
+              RemoveHostFromRegistry(removedItem.ToString());
+              var config = SshConfig.ParseFile(SshConfigPath);
+              if (config != null)
+                RemoveHostFromSshConfig(config, removedItem.ToString());
+
+              HostFilter.Items.RemoveAt(removedItemIndex);
+              return;
+            }
+            catch (Exception ex)
+            {
+              MessageBox.Show(ex.ToString(), "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+              return;
+            }
           }
         }
         else
@@ -1044,14 +1065,31 @@ namespace LogViewer
       return host;
     }
 
+    private void RemoveHostFromRegistry(string regKey)
+    {
+      if (regKey != Environment.MachineName && regKey != AddRemoteHostActionValue)
+      {
+        Registry.CurrentUser.DeleteSubKeyTree(Path.Combine(RegKey, regKey));
+      }
+    }
+
+    private void RemoveHostFromSshConfig(SshConfig config, string hostName)
+    {
+      config.RemoveByHost(hostName);
+      File.WriteAllTextAsync(SshConfigPath, config.ToString());
+    }
+
     private void TextBlock_MouseRightButtonUp(object sender, MouseButtonEventArgs e)
     {
       var host = sender as TextBlock;
-      if (host.Text != Environment.MachineName && host.Text != AddRemoteHostActionValue)
-      {
-        Registry.CurrentUser.DeleteSubKeyTree(Path.Combine(RegKey, host.Text));
-        InitHosts();
-      }
+
+      RemoveHostFromRegistry(host.Text);
+
+      var config = SshConfig.ParseFile(SshConfigPath);
+      if (config != null)
+        RemoveHostFromSshConfig(config, host.Text);
+
+      InitHosts();
     }
   }
 }

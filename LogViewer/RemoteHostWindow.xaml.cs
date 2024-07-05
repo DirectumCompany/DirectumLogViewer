@@ -33,7 +33,10 @@ namespace LogViewer
       var pass = this.Password.Password;
       var passKey = this.IdentityFile.Text;
       if (string.IsNullOrEmpty(passKey) && string.IsNullOrEmpty(pass))
-        throw new Exception("Wrong credentials");
+      {
+        MessageBox.Show("Wrong credentials", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+        return;
+      }
 
       var host = new SshHost
       {
