@@ -4,6 +4,8 @@ using Avalonia.Platform.Storage;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia;
 using CommunityToolkit.Mvvm.ComponentModel;
+using System.Threading.Tasks;
+using System.ComponentModel;
 
 namespace LogViewer.ViewModels
 {
@@ -13,17 +15,23 @@ namespace LogViewer.ViewModels
     private string windowTitle;
 
     public ObservableCollection<LogFileDescription> LogFiles { get; }
+    
+    [ObservableProperty]
+    private LogFileDescription? selectedLogFile;
 
-    private LogFileDescription? selectedLogFile = null;
+    /*
     public LogFileDescription? SelectedLogFile
     {
       get => selectedLogFile;
       set
       {
         selectedLogFile = value;
-        OpenLogFile(selectedLogFile);
+        if (selectedLogFile?.ActionType == LogFileDescriptionActionType.OpenFileFromDialog)
+          OpenFilePickerAsync();
       }
-    }
+    }*/
+
+
 
     public MainWindowViewModel()
     {
@@ -33,25 +41,25 @@ namespace LogViewer.ViewModels
       {
         new LogFileDescription("Open from file..", LogFileDescriptionActionType.OpenFileFromDialog)
       };
+
+      OnPropertyChanged
     }
 
-    private void OpenLogFile(LogFileDescription? logFile)
-    {
-      // todo logic here
-      WindowTitle = OpenFilePickerAsync().Path.LocalPath;
-    }
 
-    private IStorageFile? OpenFilePickerAsync()
+    private async Task<IStorageFile?> OpenFilePickerAsync()
     {
       if (Application.Current?.ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime desktop ||
           desktop.MainWindow?.StorageProvider is not { } provider)
         throw new NullReferenceException("Missing StorageProvider instance.");
 
-      var files =  provider.OpenFilePickerAsync(new FilePickerOpenOptions()
+      var files = await provider.OpenFilePickerAsync(new FilePickerOpenOptions()
       {
-        Title = "Open Log File",
+        Title = "Open Text File",
         AllowMultiple = false
-      }).Result;
+      });
+
+      if (files?.Count >= 1)
+        WindowTitle = files[0].Path.LocalPath;
 
       return files?.Count >= 1 ? files[0] : null;
     }
