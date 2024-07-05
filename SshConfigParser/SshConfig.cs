@@ -212,7 +212,14 @@ namespace SshConfigParser
     /// </summary>
     /// <param name="path"></param>
     /// <returns></returns>
-    public static SshConfig ParseFile(string path) => Parse(File.ReadAllText(path));
+    public static SshConfig? ParseFile(string path)
+    {
+      SshConfig? config = null;
+      if (File.Exists(path))
+        config = Parse(File.ReadAllText(path));
+
+      return config;
+    }
 
     /// <summary>
     /// Parses the SSH config text.
