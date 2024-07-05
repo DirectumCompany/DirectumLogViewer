@@ -1,4 +1,4 @@
-﻿using Microsoft.Win32;
+using Microsoft.Win32;
 using Microsoft.WindowsAPICodePack.Dialogs;
 using SshConfigParser;
 using System;
@@ -63,9 +63,12 @@ namespace LogViewer
       key.Close();
       if (AddToConfig.IsChecked ?? false)
       {
-        var result = SshConfig.ParseFile(SshConfigPath);
-        result.Add(host);
-        File.WriteAllTextAsync(SshConfigPath, result.ToString());
+        var config = SshConfig.ParseFile(SshConfigPath);
+        if (config != null)
+        {
+          config.Add(host);
+          File.WriteAllTextAsync(SshConfigPath, config.ToString());
+        }
       }
 
       this.DialogResult = true;
