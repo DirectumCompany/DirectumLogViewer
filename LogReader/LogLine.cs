@@ -17,7 +17,7 @@ namespace LogReader
     public string Version { get; set; }
     public string Pid { get; set; }
     public string Trace { get; set; }
-    public int NumLine { get; set; }
+    public long NumLine { get; set; }
 
   }
 }

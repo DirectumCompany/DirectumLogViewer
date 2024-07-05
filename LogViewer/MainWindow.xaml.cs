@@ -35,8 +35,6 @@ namespace LogViewer
 
     public const string NotificationTimeKey = "Time";
 
-    private const string OpenAction = "OpenAction";
-
     private const string All = "All";
 
     private const string IconFileName = "horse.png";
@@ -58,8 +56,6 @@ namespace LogViewer
     private LogWatcher logWatcher;
 
     private ScrollViewer gridScrollViewer;
-
-    private string openedFileFullPath;
 
     private readonly string[] hiddenColumns = { "Pid", "Trace", "Tenant" };
 
@@ -169,9 +165,14 @@ namespace LogViewer
       LogsFileNames.Items.Clear();
 
       foreach (var file in files)
-        LogsFileNames.Items.Add(new LogFile(file));
+      {
+        var logFileOpener = new LogFileOpener(Path.GetFileName(file), LogFileOpenerType.FromFileDirect);
+        logFileOpener.PathToFile = file;
+        LogsFileNames.Items.Add(logFileOpener);
+      }
 
-      LogsFileNames.Items.Add(new LogFile(OpenAction, "Open from file..."));
+      LogsFileNames.Items.Add(new LogFileOpener("Open from clipboard..", LogFileOpenerType.FromClipboard));
+      LogsFileNames.Items.Add(new LogFileOpener("Open from file..", LogFileOpenerType.FromFileWithDialog));
 
       InitTenantFilter();
       InitLevelFilter();
@@ -362,11 +363,18 @@ namespace LogViewer
 
       var comboBox = sender as ComboBox;
 
-      LogFile selectedItem = comboBox.SelectedItem as LogFile;
+      var selectedItem = comboBox.SelectedItem as LogFileOpener;
       if (selectedItem == null)
         return;
 
-      if (selectedItem.FullPath == OpenAction)
+      if (selectedItem.Type == LogFileOpenerType.FromFileDirect)
+      {
+        OpenLogFile(selectedItem.PathToFile);
+        Filter.Text = filterValue;
+        LevelFilter.SelectedValue = levelValue;
+      }
+
+      if (selectedItem.Type == LogFileOpenerType.FromFileWithDialog)
       {
         var dialog = new CommonOpenFileDialog
         {
@@ -379,16 +387,12 @@ namespace LogViewer
           SelectFileToOpen(dialog.FileName);
         else
           comboBox.SelectedItem = null;
-
-        return;
       }
 
-      comboBox.Items.Refresh();
-      openedFileFullPath = selectedItem.FullPath;
-      OpenLogFile(openedFileFullPath);
+      if (selectedItem.Type == LogFileOpenerType.FromClipboard)
+        PasteFromClipboard(null, null);
 
-      Filter.Text = filterValue;
-      LevelFilter.SelectedValue = levelValue;
+      comboBox.Items.Refresh();
     }
     /// <summary>
     /// Обработка блока прочитанных строк.
@@ -877,6 +881,8 @@ namespace LogViewer
     }
     #endregion
 
+    #region regex примеры
+
     private void RegexButton_Click(object sender, RoutedEventArgs e)
     {
       ContextMenu cm = this.FindResource("RegexButton") as ContextMenu;
@@ -913,47 +919,45 @@ namespace LogViewer
       }
     }
 
+    #endregion
+
     #region copy-paste-save-json-log
     public StringBuilder ReadOriginalSelectedLines()
     {
-      var currentCurs = Mouse.OverrideCursor;
-      Mouse.OverrideCursor = Cursors.Wait;
+      var fileName = logWatcher?.GetLogFilePath();
+      if (string.IsNullOrEmpty(fileName))
+        return null;
 
-      var sb = new StringBuilder();
-
-      long[] indexes = new long[LogsGrid.SelectedItems.Count];
-      var i = 0;
-      foreach (var item in LogsGrid.SelectedItems)
+      using (new WaitCursor())
       {
-        var logLine = (LogLine)item;
-        indexes[i] = logLine.NumLine;
-        i++;
-      }
+        // TODO вместо NumLine хранить позицию байт и при копировании просто устанавливать курсор в нужное место.
+        var selectedLine = LogsGrid.SelectedItems.Cast<LogLine>();
+        long[] indexes = selectedLine.Select(l => l.NumLine).ToArray();
 
-      string[] f;
+        var sb = new StringBuilder();
 
-      try
-      {
-
-        FileInfo log = new FileInfo(openedFileFullPath);
-        using (var streamReader = new StreamReader(log.Open(FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+        try
         {
-          string text = streamReader.ReadToEnd();
-          f = text.Split(Environment.NewLine);
+          FileInfo log = new FileInfo(fileName);
+          using (var streamReader = new StreamReader(log.Open(FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+          {
+            long index = 0;
+            string line;
+            while (streamReader != null && (line = streamReader.ReadLine()) != null)
+            {
+              if (indexes.Contains(index))
+                sb.AppendLine(line);
+              index++;
+            }
+          }
+        }
+        catch (Exception ex)
+        {
+          MessageBox.Show($"Failed to copy lines. Error: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
         }
 
-        for (var j = 0; j < indexes.Count(); j++)
-          if (f.Count() > indexes[j])
-            sb.AppendLine(f[indexes[j]]);
+        return sb;
       }
-      catch (Exception ex)
-      {
-        MessageBox.Show(ex.Message);
-      }
-
-
-      Mouse.OverrideCursor = currentCurs;
-      return sb;
     }
 
     private void CopyJsonCommand(object sender, ExecutedRoutedEventArgs e)
@@ -973,20 +977,28 @@ namespace LogViewer
       File.WriteAllText(dialog.FileName, sb.ToString());
     }
 
-    private void PasteJsonCommand(object sender, ExecutedRoutedEventArgs e)
+    private void PasteFromClipboard(object sender, ExecutedRoutedEventArgs e)
     {
-      string tmp;
+      string clipboardText = Clipboard.GetText();
+
+      if (string.IsNullOrEmpty(clipboardText))
+      {
+        MessageBox.Show("Clipboard is empty.", "Information", MessageBoxButton.OK, MessageBoxImage.Information);
+        return;
+      }
+
+      string tmpFile;
       try
       {
-        tmp = Path.GetTempFileName();
+        tmpFile = Path.GetTempFileName();
       }
       catch (IOException)
       {
-        MessageBox.Show("Удалите временные файлы вида tmp????.tmp", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+        MessageBox.Show("Failed to create temporary file.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
         return;
       }
-      File.WriteAllText(tmp, Clipboard.GetText());
-      var logFile = new LogFile(tmp);
+      File.WriteAllText(tmpFile, clipboardText);
+      var logFile = new LogFile(tmpFile);
       LogsFileNames.Items.Insert(LogsFileNames.Items.Count - 1, logFile);
       LogsFileNames.SelectedItem = logFile;
     }

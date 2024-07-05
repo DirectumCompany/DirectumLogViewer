@@ -65,7 +65,7 @@
 
     <Window.CommandBindings>
         <CommandBinding  Command="{StaticResource SearchTextCommand}" Executed="SearchText"  />
-        <CommandBinding  Command="{StaticResource PasteJsonCommand}" Executed="PasteJsonCommand"  />
+        <CommandBinding  Command="{StaticResource PasteJsonCommand}" Executed="PasteFromClipboard"  />
     </Window.CommandBindings>
 
     <Window.InputBindings>
