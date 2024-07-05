@@ -17,6 +17,10 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
 using System.Text.RegularExpressions;
+using SshConfigParser;
+using Renci.SshNet;
+using Microsoft.Win32;
+using System.Net.Sockets;
 
 namespace LogViewer
 {
@@ -37,9 +41,14 @@ namespace LogViewer
 
     private const string OpenAction = "OpenAction";
 
+    private const string AddRemoteHostAction = "AddRemoteHost";
+
+    private const string AddRemoteHostActionValue = "Add remote host...";
+
     private const string All = "All";
 
     private const string IconFileName = "horse.png";
+
     private const int GridUpdatePeriod = 1000;
 
     // UseRegex is binding proprety
@@ -48,6 +57,8 @@ namespace LogViewer
     private readonly List<LogHandler> logHandlers = new List<LogHandler>();
 
     private readonly ObservableCollection<LogLine> logLines = new ObservableCollection<LogLine>();
+
+    private static string SshConfigPath => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".ssh", "config");
 
     private ObservableCollection<LogLine> filteredLogLines;
 
@@ -62,6 +73,12 @@ namespace LogViewer
     private string openedFileFullPath;
 
     private readonly string[] hiddenColumns = { "Pid", "Trace", "Tenant" };
+
+    private List<SshHost> KnownHosts { get; set; }
+
+    private const string RegKey = @"SOFTWARE\JsonLogViewerSettings\RemoteHost\";
+
+    private ConnectionInfo connectionInfo;
 
 
     public MainWindow()
@@ -166,20 +183,22 @@ namespace LogViewer
 
     private void InitControls(string[] files)
     {
-      LogsFileNames.Items.Clear();
+      InitLogFiles(files);
+      InitTenantFilter();
+      InitLevelFilter();
+      InitLoggerFilter();
+      InitHosts();
+      logLinesView = CollectionViewSource.GetDefaultView(logLines);
+    }
 
+    private void InitLogFiles(string[] files)
+    {
+      LogsFileNames.Items.Clear();
       foreach (var file in files)
         LogsFileNames.Items.Add(new LogFile(file));
 
       LogsFileNames.Items.Add(new LogFile(OpenAction, "Open from file..."));
-
-      InitTenantFilter();
-      InitLevelFilter();
-      InitLoggerFilter();
-
-      logLinesView = CollectionViewSource.GetDefaultView(logLines);
     }
-
     private void InitTenantFilter()
     {
       TenantFilter.Items.Clear();
@@ -205,6 +224,19 @@ namespace LogViewer
       LevelFilter.Items.Add("Fatal");
 
       LevelFilter.SelectedValue = All;
+    }
+
+    private void InitHosts()
+    {
+      HostFilter.Items.Clear();
+      HostFilter.Items.Add(new SshHost { Host = Environment.MachineName, LogsFolder = SettingsWindow.LogsPath, IsRemote = false });
+      KnownHosts = GetHostsFromRegistry();
+
+      foreach (var host in KnownHosts)
+        HostFilter.Items.Add(host);
+
+      HostFilter.Items.Add(new SshHost { Host = AddRemoteHostActionValue, LogsFolder = AddRemoteHostAction, IsRemote = false });
+      HostFilter.SelectedIndex = 0;
     }
 
     private void SetNotificationActivated()
@@ -250,8 +282,7 @@ namespace LogViewer
               if (!string.IsNullOrEmpty(Filter.Text))
                 Filter.Text = null;
 
-              if (LevelFilter.SelectedValue != All)
-                LevelFilter.SelectedValue = All;
+              LevelFilter.SelectedValue = All;
 
               SetFilter(string.Empty, All, All, All);
               LogsGrid.SelectedItem = itemWithError;
@@ -266,7 +297,7 @@ namespace LogViewer
     /// <summary>
     /// Закрытие лог файла с уничтожением потоков.
     /// </summary>
-    private void CloseLogFile()
+    private void CloseLogFile(LogWatcher logWatcher)
     {
       // Clear previous log resources
       if (logWatcher != null)
@@ -308,7 +339,11 @@ namespace LogViewer
         LogsGrid.ItemsSource = null;
         filteredLogLines = null;
 
-        logWatcher = new LogWatcher(fullPath);
+        if (connectionInfo != null)
+          logWatcher = new RemoteLogWatcher(fullPath, connectionInfo);
+        else 
+          logWatcher = new LogWatcher(fullPath);
+        
         logWatcher.BlockNewLines += OnBlockNewLines;
         logWatcher.FileReCreated += OnFileReCreated;
         logWatcher.ReadToEndLine();
@@ -358,7 +393,7 @@ namespace LogViewer
       var filterValue = Filter.Text;
       var levelValue = LevelFilter.SelectedValue;
 
-      CloseLogFile();
+      CloseLogFile(logWatcher);
 
       var comboBox = sender as ComboBox;
 
@@ -911,6 +946,150 @@ namespace LogViewer
         var logger = this.LoggerFilter.SelectedValue as string;
         this.SetFilter(this.Filter.Text, tenant, level, logger);
       }
+    }
+
+    private void Host_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+      var comboBox = sender as ComboBox;
+      var selectedItem = comboBox.SelectedItem as SshHost;
+
+      if (selectedItem != null)
+      {
+        if (selectedItem.LogsFolder == AddRemoteHostAction)
+        {
+          var window = new RemoteHostWindow();
+          if (window.ShowDialog() ?? false)
+          {
+            var host = new SshHost 
+            { 
+              HostName = window.HostName.Text, 
+              IsRemote = true, 
+              Host = window.Host.Text,
+              User = window.Username.Text,
+              Port = window.Port.Text,
+              LogsFolder = window.LogsPath.Text,
+              Password = window.Password.Password,
+              IdentityFile = window.IdentityFile.Text
+            };
+            HostFilter.Items.Insert(HostFilter.Items.Count - 1, host);
+            HostFilter.SelectedItem = host;
+            return;
+          }
+          else
+          {
+            HostFilter.SelectedItem = null;
+            return;
+          }
+        }
+        string[] files;
+        if (selectedItem.IsRemote)
+        {
+          var authMethods = new List<AuthenticationMethod>();
+          if (!string.IsNullOrEmpty(selectedItem.IdentityFile))
+          {
+            var pk = new PrivateKeyFile(selectedItem.IdentityFile);
+            authMethods.Add(new PrivateKeyAuthenticationMethod(selectedItem.User, pk));
+          }      
+          if (!string.IsNullOrEmpty(selectedItem.Password))
+            authMethods.Add(new PasswordAuthenticationMethod(selectedItem.User, selectedItem.Password));
+
+          connectionInfo = new ConnectionInfo(selectedItem.HostName, int.Parse(selectedItem.Port), selectedItem.User, authMethods.ToArray());
+          using (var client = new SftpClient(connectionInfo))
+          {
+            try
+            {
+              client.Connect();
+              files = client.ListDirectory(selectedItem.LogsFolder)?.Where(x => x.Name.Contains(".log"))?.Select(x => x.FullName).ToArray();
+              client.Disconnect();
+            }
+            catch (SocketException ex)
+            {
+              MessageBox.Show(ex.ToString(), "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+              var removedItemIndex = HostFilter.Items.Count - 2;
+              var removedItem = HostFilter.Items[removedItemIndex];
+              RemoveHostFromRegistry(removedItem.ToString());
+              var config = SshConfig.ParseFile(SshConfigPath);
+              if (config != null)
+                RemoveHostFromSshConfig(config, removedItem.ToString());
+
+              HostFilter.Items.RemoveAt(removedItemIndex);
+              return;
+            }
+            catch (Exception ex)
+            {
+              MessageBox.Show(ex.ToString(), "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+              return;
+            }
+          }
+        }
+        else
+        {
+          connectionInfo = null;
+          files = FindLogs(SettingsWindow.LogsPath);
+        }
+
+        InitLogFiles(files);
+      }
+    }
+
+    private List<SshHost> GetHostsFromRegistry()
+    {
+      var hostsProperties = Registry.CurrentUser.OpenSubKey(RegKey)?.GetSubKeyNames();
+      var result = new List<SshHost>();
+      if (hostsProperties != null)
+        foreach (var hostProperties in hostsProperties)
+          result.Add(ParseHost(RegKey + hostProperties));
+
+      return result;
+    }
+
+    private SshHost ParseHost(string regKey)
+    {
+      var host = new SshHost();
+      var key = Registry.CurrentUser.OpenSubKey(regKey);
+      var properties = key.GetValueNames();
+      foreach (var property in properties)
+      {
+        switch(property)
+        {
+          case "Host": host.Host = key.GetValue(property)?.ToString(); break;
+          case "Name": host.HostName = key.GetValue(property)?.ToString(); break;
+          case "LogsFolder": host.LogsFolder = key.GetValue(property)?.ToString(); ; break;
+          case "User": host.User = key.GetValue(property)?.ToString(); ; break;
+          case "Password": host.Password = key.GetValue(property)?.ToString(); ; break;
+          case "IdentityFile": host.IdentityFile = key.GetValue(property)?.ToString(); ; break;
+          default: break;
+        }
+      }
+
+      return host;
+    }
+
+    private void RemoveHostFromRegistry(string regKey)
+    {
+      if (regKey != Environment.MachineName && regKey != AddRemoteHostActionValue)
+      {
+        Registry.CurrentUser.DeleteSubKeyTree(Path.Combine(RegKey, regKey));
+      }
+    }
+
+    private void RemoveHostFromSshConfig(SshConfig config, string hostName)
+    {
+      config.RemoveByHost(hostName);
+      File.WriteAllTextAsync(SshConfigPath, config.ToString());
+    }
+
+    private void TextBlock_MouseRightButtonUp(object sender, MouseButtonEventArgs e)
+    {
+      var host = sender as TextBlock;
+
+      RemoveHostFromRegistry(host.Text);
+
+      var config = SshConfig.ParseFile(SshConfigPath);
+      if (config != null)
+        RemoveHostFromSshConfig(config, host.Text);
+
+      InitHosts();
     }
   }
 }
