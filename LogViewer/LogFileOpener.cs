@@ -3,17 +3,24 @@
   class LogFileOpener
   {
     // Тип открытия лог файла
-    public LogFileOpenerType Type { get; set; }
+    public LogFileOpenerType Type { get; }
 
     // Имя лог файла
-    public string Name { get; set; }
+    public string Name { get; }
 
     // Путь к лог файлу
-    public string PathToFile { get; set; }
+    public string PathToFile { get; }
 
     public LogFileOpener(string name, LogFileOpenerType type)
     {
       this.Name = name;
+      this.Type = type;
+    }
+
+    public LogFileOpener(string name, string pathToFile, LogFileOpenerType type)
+    {
+      this.Name = name;
+      this.PathToFile = pathToFile;
       this.Type = type;
     }
   }

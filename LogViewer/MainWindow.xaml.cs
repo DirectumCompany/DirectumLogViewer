@@ -166,8 +166,7 @@ namespace LogViewer
 
       foreach (var file in files)
       {
-        var logFileOpener = new LogFileOpener(Path.GetFileName(file), LogFileOpenerType.FromFileDirect);
-        logFileOpener.PathToFile = file;
+        var logFileOpener = new LogFileOpener(Path.GetFileName(file), file, LogFileOpenerType.FromFileDirect);
         LogsFileNames.Items.Add(logFileOpener);
       }
 
@@ -726,9 +725,9 @@ namespace LogViewer
 
     private void SelectFileToOpen(string fileName)
     {
-      var logFiles = LogsFileNames.Items.Cast<LogFile>().ToList();
+      var logFiles = LogsFileNames.Items.Cast<LogFileOpener>().ToList();
 
-      var logFile = logFiles.FirstOrDefault(l => string.Equals(l.FullPath, fileName, StringComparison.InvariantCultureIgnoreCase));
+      var logFile = logFiles.FirstOrDefault(l => string.Equals(l.PathToFile, fileName, StringComparison.InvariantCultureIgnoreCase));
 
       if (logFile != null)
       {
@@ -740,8 +739,8 @@ namespace LogViewer
         if (SettingsWindow.UseBackgroundNotification)
           logHandlers.Add(new LogHandler(fileName, notifyLogo));
 
-        logFile = new LogFile(fileName);
-        LogsFileNames.Items.Insert(LogsFileNames.Items.Count - 1, logFile);
+        logFile = new LogFileOpener(Path.GetFileName(fileName), fileName, LogFileOpenerType.FromFileDirect);
+        LogsFileNames.Items.Insert(LogsFileNames.Items.Count - 2, logFile);
         LogsFileNames.SelectedItem = logFile;
       }
     }
@@ -998,9 +997,9 @@ namespace LogViewer
         return;
       }
       File.WriteAllText(tmpFile, clipboardText);
-      var logFile = new LogFile(tmpFile);
-      LogsFileNames.Items.Insert(LogsFileNames.Items.Count - 1, logFile);
-      LogsFileNames.SelectedItem = logFile;
+      var logFileOpener = new LogFileOpener(Path.GetFileName(tmpFile), tmpFile, LogFileOpenerType.FromFileDirect);
+      LogsFileNames.Items.Insert(LogsFileNames.Items.Count - 2, logFileOpener);
+      LogsFileNames.SelectedItem = logFileOpener;
     }
     #endregion
   }
