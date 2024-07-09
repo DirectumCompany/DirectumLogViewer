@@ -38,6 +38,7 @@ namespace LogViewer
     private const string All = "All";
 
     private const string IconFileName = "horse.png";
+
     private const int GridUpdatePeriod = 1000;
 
     // UseRegex is binding proprety
@@ -66,7 +67,7 @@ namespace LogViewer
 
       DataContext = this;
 
-      SettingsWindow.Load();
+      SettingsWindow.LoadSettings();
 
       if (SettingsWindow.IsFirstRun() && !ShowSettingsWindow())
       {
@@ -84,7 +85,7 @@ namespace LogViewer
 
       var files = FindLogs(SettingsWindow.LogsPath);
 
-      if (files != null && SettingsWindow.UseBackgroundNotification)
+      if (SettingsWindow.UseBackgroundNotification)
         CreateHandlers(files);
 
       InitControls(files);
@@ -133,34 +134,42 @@ namespace LogViewer
       return new Uri(imageFilePath);
     }
 
-    private string[] FindLogs(string directory)
+    private List<string> FindLogs(string directory)
     {
-      if (!Directory.Exists(directory))
-        return null;
+      var allfiles = new List<string>();
 
-      string[] allfiles = Directory.GetFiles(directory, "*.log", SearchOption.AllDirectories);
+      if (!Directory.Exists(directory))
+        return allfiles;
+
+      try
+      {
+        allfiles = Directory.GetFiles(directory, "*.log", SearchOption.AllDirectories).ToList();
+      }
+      catch (Exception ex)
+      {
+        MessageBox.Show($"Log file search error: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+        return allfiles;
+      }
 
       string machineName = System.Environment.MachineName.ToLower();
       var currentDate = DateTime.Today.ToString("yyyy-MM-dd");
 
       var whiteList = SettingsWindow.WhitelistLogs.Split(new[] { '\r', '\n' })
-        .Select(s => s.Trim().ToLower().Replace("${machinename}", machineName).Replace("${shortdate}", currentDate))
-        .Where(s => !String.IsNullOrEmpty(s))
+        .Select(s => s.Trim().Replace("${machinename}", machineName).Replace("${shortdate}", currentDate))
+        .Where(s => !string.IsNullOrEmpty(s))
         .ToArray();
 
-      return allfiles.Select(f => new LogFile(f))
-        .Where(n => whiteList.Contains(System.IO.Path.GetFileNameWithoutExtension(n.Name.ToLower())))
-        .Select(r => r.FullPath)
-        .ToArray();
+      return allfiles.Where(n => whiteList.Contains(Path.GetFileNameWithoutExtension(n), StringComparer.InvariantCultureIgnoreCase))
+        .ToList();
     }
 
-    private void CreateHandlers(string[] files)
+    private void CreateHandlers(List<string> files)
     {
       foreach (var file in files)
         Task.Run(() => logHandlers.Add(new LogHandler(file, this.notifyLogo)));
     }
 
-    private void InitControls(string[] files)
+    private void InitControls(List<string> files)
     {
       LogsFileNames.Items.Clear();
 
@@ -229,17 +238,7 @@ namespace LogViewer
             if (!LogsFileNames.IsEnabled)
               return;
 
-            var selectedLog = (LogFile)LogsFileNames.SelectedItem;
-
-            if (selectedLog == null || selectedLog.FullPath.ToLower() != filePath.ToLower())
-            {
-              var logWithError = LogsFileNames.Items.Cast<LogFile>().FirstOrDefault(i => i.FullPath.ToLower() == filePath.ToLower());
-
-              if (logWithError == null)
-                return;
-
-              LogsFileNames.SelectedItem = logWithError;
-            }
+            SelectFileToOpen(filePath);
 
             var dt = new DateTime(long.Parse(time));
             var itemWithError = logLines.FirstOrDefault(i => i.Level == LogHandler.LogLevelError && i.Time == dt);
@@ -314,7 +313,7 @@ namespace LogViewer
         logWatcher.ReadToEndLine();
         LogsGrid.ItemsSource = logLines;
         if (logLines.Any())
-          LogsGrid.ScrollIntoView(logLines.Last());
+          gridScrollViewer.ScrollToEnd();
 
         logWatcher.StartWatch(GridUpdatePeriod);
 
@@ -435,7 +434,7 @@ namespace LogViewer
           }
 
           if (scrollToEnd && convertedLogLines.Any())
-            LogsGrid.ScrollIntoView(convertedLogLines.Last());
+            gridScrollViewer.ScrollToEnd();
 
         }));
     }
@@ -997,9 +996,7 @@ namespace LogViewer
         return;
       }
       File.WriteAllText(tmpFile, clipboardText);
-      var logFileOpener = new LogFileOpener(Path.GetFileName(tmpFile), tmpFile, LogFileOpenerType.FromFileDirect);
-      LogsFileNames.Items.Insert(LogsFileNames.Items.Count - 2, logFileOpener);
-      LogsFileNames.SelectedItem = logFileOpener;
+      SelectFileToOpen(tmpFile);
     }
     #endregion
   }
