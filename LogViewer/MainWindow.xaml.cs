@@ -21,6 +21,7 @@ using SshConfigParser;
 using Renci.SshNet;
 using Microsoft.Win32;
 using System.Net.Sockets;
+using System.Windows.Documents;
 
 namespace LogViewer
 {
@@ -70,8 +71,6 @@ namespace LogViewer
 
     private ScrollViewer gridScrollViewer;
 
-    private string openedFileFullPath;
-
     private readonly string[] hiddenColumns = { "Pid", "Trace", "Tenant" };
 
     private List<SshHost> KnownHosts { get; set; }
@@ -87,7 +86,7 @@ namespace LogViewer
 
       DataContext = this;
 
-      SettingsWindow.Load();
+      SettingsWindow.LoadSettings();
 
       if (SettingsWindow.IsFirstRun() && !ShowSettingsWindow())
       {
@@ -105,7 +104,7 @@ namespace LogViewer
 
       var files = FindLogs(SettingsWindow.LogsPath);
 
-      if (files != null && SettingsWindow.UseBackgroundNotification)
+      if (SettingsWindow.UseBackgroundNotification)
         CreateHandlers(files);
 
       InitControls(files);
@@ -154,36 +153,45 @@ namespace LogViewer
       return new Uri(imageFilePath);
     }
 
-    private string[] FindLogs(string directory)
+    private List<string> FindLogs(string directory)
     {
-      if (!Directory.Exists(directory))
-        return null;
+      var allfiles = new List<string>();
 
-      string[] allfiles = Directory.GetFiles(directory, "*.log", SearchOption.AllDirectories);
+      if (!Directory.Exists(directory))
+        return allfiles;
+
+      try
+      {
+        allfiles = Directory.GetFiles(directory, "*.log", SearchOption.AllDirectories).ToList();
+      }
+      catch (Exception ex)
+      {
+        MessageBox.Show($"Log file search error: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+        return allfiles;
+      }
 
       string machineName = System.Environment.MachineName.ToLower();
       var currentDate = DateTime.Today.ToString("yyyy-MM-dd");
 
       var whiteList = SettingsWindow.WhitelistLogs.Split(new[] { '\r', '\n' })
-        .Select(s => s.Trim().ToLower().Replace("${machinename}", machineName).Replace("${shortdate}", currentDate))
-        .Where(s => !String.IsNullOrEmpty(s))
+        .Select(s => s.Trim().Replace("${machinename}", machineName).Replace("${shortdate}", currentDate))
+        .Where(s => !string.IsNullOrEmpty(s))
         .ToArray();
 
-      return allfiles.Select(f => new LogFile(f))
-        .Where(n => whiteList.Contains(System.IO.Path.GetFileNameWithoutExtension(n.Name.ToLower())))
-        .Select(r => r.FullPath)
-        .ToArray();
+      return allfiles.Where(n => whiteList.Contains(Path.GetFileNameWithoutExtension(n), StringComparer.InvariantCultureIgnoreCase))
+        .ToList();
     }
 
-    private void CreateHandlers(string[] files)
+    private void CreateHandlers(List<string> files)
     {
       foreach (var file in files)
         Task.Run(() => logHandlers.Add(new LogHandler(file, this.notifyLogo)));
     }
 
-    private void InitControls(string[] files)
+    private void InitControls(List<string> files)
     {
       InitLogFiles(files);
+
       InitTenantFilter();
       InitLevelFilter();
       InitLoggerFilter();
@@ -191,13 +199,14 @@ namespace LogViewer
       logLinesView = CollectionViewSource.GetDefaultView(logLines);
     }
 
-    private void InitLogFiles(string[] files)
+    private void InitLogFiles(List<string> files)
     {
       LogsFileNames.Items.Clear();
       foreach (var file in files)
-        LogsFileNames.Items.Add(new LogFile(file));
+          LogsFileNames.Items.Add(new LogFileOpener(Path.GetFileName(file), file, LogFileOpenerType.FromFileDirect));
 
-      LogsFileNames.Items.Add(new LogFile(OpenAction, "Open from file..."));
+      LogsFileNames.Items.Add(new LogFileOpener("Open from clipboard..", LogFileOpenerType.FromClipboard));
+      LogsFileNames.Items.Add(new LogFileOpener("Open from file..", LogFileOpenerType.FromFileWithDialog));
     }
     private void InitTenantFilter()
     {
@@ -261,17 +270,7 @@ namespace LogViewer
             if (!LogsFileNames.IsEnabled)
               return;
 
-            var selectedLog = (LogFile)LogsFileNames.SelectedItem;
-
-            if (selectedLog == null || selectedLog.FullPath.ToLower() != filePath.ToLower())
-            {
-              var logWithError = LogsFileNames.Items.Cast<LogFile>().FirstOrDefault(i => i.FullPath.ToLower() == filePath.ToLower());
-
-              if (logWithError == null)
-                return;
-
-              LogsFileNames.SelectedItem = logWithError;
-            }
+            SelectFileToOpen(filePath);
 
             var dt = new DateTime(long.Parse(time));
             var itemWithError = logLines.FirstOrDefault(i => i.Level == LogHandler.LogLevelError && i.Time == dt);
@@ -349,7 +348,7 @@ namespace LogViewer
         logWatcher.ReadToEndLine();
         LogsGrid.ItemsSource = logLines;
         if (logLines.Any())
-          LogsGrid.ScrollIntoView(logLines.Last());
+          gridScrollViewer.ScrollToEnd();
 
         logWatcher.StartWatch(GridUpdatePeriod);
 
@@ -397,11 +396,18 @@ namespace LogViewer
 
       var comboBox = sender as ComboBox;
 
-      LogFile selectedItem = comboBox.SelectedItem as LogFile;
+      var selectedItem = comboBox.SelectedItem as LogFileOpener;
       if (selectedItem == null)
         return;
 
-      if (selectedItem.FullPath == OpenAction)
+      if (selectedItem.Type == LogFileOpenerType.FromFileDirect)
+      {
+        OpenLogFile(selectedItem.PathToFile);
+        Filter.Text = filterValue;
+        LevelFilter.SelectedValue = levelValue;
+      }
+
+      if (selectedItem.Type == LogFileOpenerType.FromFileWithDialog)
       {
         var dialog = new CommonOpenFileDialog
         {
@@ -414,17 +420,12 @@ namespace LogViewer
           SelectFileToOpen(dialog.FileName);
         else
           comboBox.SelectedItem = null;
-
-        return;
       }
 
+      if (selectedItem.Type == LogFileOpenerType.FromClipboard)
+        PasteFromClipboard(null, null);
+
       comboBox.Items.Refresh();
-
-      openedFileFullPath = selectedItem.FullPath;
-      OpenLogFile(openedFileFullPath);
-
-      Filter.Text = filterValue;
-      LevelFilter.SelectedValue = levelValue;
     }
     /// <summary>
     /// Обработка блока прочитанных строк.
@@ -453,6 +454,7 @@ namespace LogViewer
 
           foreach (var logLine in convertedLogLines)
           {
+            logLine.NumLine = logLines.Count;
             logLines.Add(logLine);
 
             if (filteredLogLines != null)
@@ -467,7 +469,7 @@ namespace LogViewer
           }
 
           if (scrollToEnd && convertedLogLines.Any())
-            LogsGrid.ScrollIntoView(convertedLogLines.Last());
+            gridScrollViewer.ScrollToEnd();
 
         }));
     }
@@ -757,9 +759,9 @@ namespace LogViewer
 
     private void SelectFileToOpen(string fileName)
     {
-      var logFiles = LogsFileNames.Items.Cast<LogFile>().ToList();
+      var logFiles = LogsFileNames.Items.Cast<LogFileOpener>().ToList();
 
-      var logFile = logFiles.FirstOrDefault(l => string.Equals(l.FullPath, fileName, StringComparison.InvariantCultureIgnoreCase));
+      var logFile = logFiles.FirstOrDefault(l => string.Equals(l.PathToFile, fileName, StringComparison.InvariantCultureIgnoreCase));
 
       if (logFile != null)
       {
@@ -771,8 +773,8 @@ namespace LogViewer
         if (SettingsWindow.UseBackgroundNotification)
           logHandlers.Add(new LogHandler(fileName, notifyLogo));
 
-        logFile = new LogFile(fileName);
-        LogsFileNames.Items.Insert(LogsFileNames.Items.Count - 1, logFile);
+        logFile = new LogFileOpener(Path.GetFileName(fileName), fileName, LogFileOpenerType.FromFileDirect);
+        LogsFileNames.Items.Insert(LogsFileNames.Items.Count - 2, logFile);
         LogsFileNames.SelectedItem = logFile;
       }
     }
@@ -912,6 +914,8 @@ namespace LogViewer
     }
     #endregion
 
+    #region regex примеры
+
     private void RegexButton_Click(object sender, RoutedEventArgs e)
     {
       ContextMenu cm = this.FindResource("RegexButton") as ContextMenu;
@@ -981,7 +985,7 @@ namespace LogViewer
             return;
           }
         }
-        string[] files;
+        List<string> files;
         if (selectedItem.IsRemote)
         {
           var authMethods = new List<AuthenticationMethod>();
@@ -999,7 +1003,7 @@ namespace LogViewer
             try
             {
               client.Connect();
-              files = client.ListDirectory(selectedItem.LogsFolder)?.Where(x => x.Name.Contains(".log"))?.Select(x => x.FullName).ToArray();
+              files = client.ListDirectory(selectedItem.LogsFolder)?.Where(x => x.Name.Contains(".log"))?.Select(x => x.FullName).ToList();
               client.Disconnect();
             }
             catch (SocketException ex)
@@ -1091,5 +1095,88 @@ namespace LogViewer
 
       InitHosts();
     }
+
+    #endregion
+
+    #region copy-paste-save-json-log
+    public StringBuilder ReadOriginalSelectedLines()
+    {
+      var fileName = logWatcher?.GetLogFilePath();
+      if (string.IsNullOrEmpty(fileName))
+        return null;
+
+      using (new WaitCursor())
+      {
+        // TODO вместо NumLine хранить позицию байт и при копировании просто устанавливать курсор в нужное место.
+        var selectedLine = LogsGrid.SelectedItems.Cast<LogLine>();
+        long[] indexes = selectedLine.Select(l => l.NumLine).ToArray();
+
+        var sb = new StringBuilder();
+
+        try
+        {
+          FileInfo log = new FileInfo(fileName);
+          using (var streamReader = new StreamReader(log.Open(FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+          {
+            long index = 0;
+            string line;
+            while (streamReader != null && (line = streamReader.ReadLine()) != null)
+            {
+              if (indexes.Contains(index))
+                sb.AppendLine(line);
+              index++;
+            }
+          }
+        }
+        catch (Exception ex)
+        {
+          MessageBox.Show($"Failed to copy lines. Error: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+
+        return sb;
+      }
+    }
+
+    private void CopyJsonCommand(object sender, ExecutedRoutedEventArgs e)
+    {
+      var sb = ReadOriginalSelectedLines();
+      Clipboard.SetText(sb.ToString());
+    }
+
+    private void SaveAsJsonCommand(object sender, ExecutedRoutedEventArgs e)
+    {
+      var dialog = new Microsoft.Win32.SaveFileDialog();
+      dialog.Filter = "Log-files(*.log)|*.log";
+      var result = dialog.ShowDialog(this);
+      if (!(bool)result)
+        return;
+      var sb = ReadOriginalSelectedLines();
+      File.WriteAllText(dialog.FileName, sb.ToString());
+    }
+
+    private void PasteFromClipboard(object sender, ExecutedRoutedEventArgs e)
+    {
+      string clipboardText = Clipboard.GetText();
+
+      if (string.IsNullOrEmpty(clipboardText))
+      {
+        MessageBox.Show("Clipboard is empty.", "Information", MessageBoxButton.OK, MessageBoxImage.Information);
+        return;
+      }
+
+      string tmpFile;
+      try
+      {
+        tmpFile = Path.GetTempFileName();
+      }
+      catch (IOException)
+      {
+        MessageBox.Show("Failed to create temporary file.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+        return;
+      }
+      File.WriteAllText(tmpFile, clipboardText);
+      SelectFileToOpen(tmpFile);
+    }
+    #endregion
   }
 }

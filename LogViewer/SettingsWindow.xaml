@@ -36,7 +36,7 @@
             VerticalScrollBarVisibility="Visible"
             Text="{Binding Path=(local:SettingsWindow.WhitelistLogs), Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
 
-        <CheckBox Grid.Row="4" Margin="0,5,0,0" x:Name="UseBackgroundNotificationCheckBox" IsThreeState="False"  Content="background monitoring and displaying error notifications in log files" IsChecked="{Binding Path=(local:SettingsWindow.UseBackgroundNotification), Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+        <CheckBox Grid.Row="4" Margin="0,5,0,0" x:Name="UseBackgroundNotificationCheckBox" IsThreeState="False"  Content="background monitoring and displaying error notifications" IsChecked="{Binding Path=(local:SettingsWindow.UseBackgroundNotification), Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
         <CheckBox Grid.Row="5" Margin="0,5,0,0" x:Name="AssociateLogFileCheckBox" IsThreeState="False"  Content="associate *.log file with application" IsChecked="{Binding Path=(local:SettingsWindow.AssociateLogFile), Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
 
         <WrapPanel Grid.Row="6" HorizontalAlignment="Right" Margin="0,20,0,0" VerticalAlignment="Bottom">
