@@ -1,11 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.31005.135
+# Visual Studio Version 17
+VisualStudioVersion = 17.6.33829.357
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LogReader", "LogReader\LogReader.csproj", "{8081160C-85E6-4D46-AFCC-71DF4414FD5F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LogViewer", "LogViewer\LogViewer.csproj", "{B9734E64-AE52-47EE-A8D8-531AD2ACDB38}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LogViewer", "LogViewer\LogViewer.csproj", "{B9734E64-AE52-47EE-A8D8-531AD2ACDB38}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SshConfigParser", "SshConfigParser\SshConfigParser.csproj", "{CD6C1936-C456-4504-8063-FDC9860B7C26}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +23,10 @@ Global
 		{B9734E64-AE52-47EE-A8D8-531AD2ACDB38}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B9734E64-AE52-47EE-A8D8-531AD2ACDB38}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B9734E64-AE52-47EE-A8D8-531AD2ACDB38}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CD6C1936-C456-4504-8063-FDC9860B7C26}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CD6C1936-C456-4504-8063-FDC9860B7C26}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CD6C1936-C456-4504-8063-FDC9860B7C26}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CD6C1936-C456-4504-8063-FDC9860B7C26}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

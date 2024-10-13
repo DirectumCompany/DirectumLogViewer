@@ -1,0 +1,17 @@
+namespace SshConfigParser
+{
+  // based on https://github.com/JeremySkinner/Ssh-Config-Parser
+
+  public class ConfigNode
+  {
+    public string Before { get; set; }
+    public string After { get; set; }
+    public NodeType Type { get; set; }
+    public string Content { get; set; }
+    public string Param { get; set; }
+    public string Separator { get; set; }
+    public string Value { get; set; }
+    public bool Quoted { get; set; }
+    public SshConfig Config { get; set; }
+  }
+}
