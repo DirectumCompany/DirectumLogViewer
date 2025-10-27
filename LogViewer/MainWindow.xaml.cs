@@ -534,9 +534,7 @@ namespace LogViewer
 
       if (startLength == tb.Text.Length && tb.IsEnabled && e.UndoAction != UndoAction.Clear)
       {
-        var tenant = TenantFilter.SelectedValue as string;
-        var level = LevelFilter.SelectedValue as string;
-        var logger = LoggerFilter.SelectedValue as string;
+        GetCurrentSelectionFilters(out var tenant, out var level, out var logger);
         SetFilter(tb.Text, tenant, level, logger);
       }
     }
@@ -616,6 +614,20 @@ namespace LogViewer
 
     }
 
+    /// <summary>
+    /// Возвращает текущие выбранные значения фильтров (tenant, level, logger)
+    /// для последующей фильтрации списка логов.
+    /// </summary>
+    /// <param name="tenant">Текущая выбранная организация (tenant).</param>
+    /// <param name="level">Текущий выбранный уровень логирования.</param>
+    /// <param name="logger">Текущий выбранный источник (logger).</param>
+    private void GetCurrentSelectionFilters(out string tenant, out string level, out string logger)
+    {
+      tenant = TenantFilter.SelectedValue as string;
+      level = LevelFilter.SelectedValue as string;
+      logger = LoggerFilter.SelectedValue as string;
+    }
+
     private void CopyCommand(object sender, ExecutedRoutedEventArgs e)
     {
       var sb = new StringBuilder();
@@ -639,9 +651,7 @@ namespace LogViewer
 
       if (result == true)
       {
-        var tenant = TenantFilter.SelectedValue as string;
-        var level = LevelFilter.SelectedValue as string;
-        var logger = LoggerFilter.SelectedValue as string;
+        GetCurrentSelectionFilters(out var tenant, out var level, out var logger);
 
         using (new WaitCursor())
         {
@@ -667,8 +677,8 @@ namespace LogViewer
 
       if (tenant != null)
       {
-        var level = LevelFilter.SelectedValue as string;
-        var logger = LoggerFilter.SelectedValue as string;
+        // Получаем текущие значения для остальных фильтров
+        GetCurrentSelectionFilters(out _, out var level, out var logger);
         SetFilter(Filter.Text, tenant, level, logger);
       }
     }
@@ -679,8 +689,7 @@ namespace LogViewer
 
       if (level != null)
       {
-        var tenant = TenantFilter.SelectedValue as string;
-        var logger = LoggerFilter.SelectedValue as string;
+        GetCurrentSelectionFilters(out var tenant, out _, out var logger);
         SetFilter(Filter.Text, tenant, level, logger);
       }
     }
@@ -690,8 +699,7 @@ namespace LogViewer
 
       if (logger != null)
       {
-        var tenant = TenantFilter.SelectedValue as string;
-        var level = LevelFilter.SelectedValue as string;
+        GetCurrentSelectionFilters(out var tenant, out var level, out _);
         SetFilter(Filter.Text, tenant, level, logger);
       }
     }
@@ -910,9 +918,7 @@ namespace LogViewer
     {
       if (this.Filter.IsEnabled)
       {
-        var tenant = this.TenantFilter.SelectedValue as string;
-        var level = this.LevelFilter.SelectedValue as string;
-        var logger = this.LoggerFilter.SelectedValue as string;
+        GetCurrentSelectionFilters(out var tenant, out var level, out var logger);
         this.SetFilter(this.Filter.Text, tenant, level, logger);
       }
     }
@@ -937,7 +943,7 @@ namespace LogViewer
         try
         {
           FileInfo log = new FileInfo(fileName);
-          using (var streamReader = new StreamReader(log.Open(FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+          using (var streamReader = new StreamReader(log.Open(FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete)))
           {
             long index = 0;
             string line;

@@ -71,46 +71,50 @@ namespace LogReader
     {
       lock (readLock)
       {
-        using var fileStream = new FileStream(this.filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
-        using var streamReader = new StreamReader(fileStream);
-        long current_length = streamReader.BaseStream.Length;
-        if (current_length < fileLength)
+        try
         {
-          streamReader.DiscardBufferedData();
-          streamReader.BaseStream.Seek(0, SeekOrigin.Begin);
-          this.position = 0;
-          FileReCreated?.Invoke();
-        }
+          if (StopIfFileMissing())
+            return;
 
-        string line;
-        List<string> lines = new List<string>();
-        streamReader.BaseStream.Position = this.position;
-        fileLength = current_length;
-        while (streamReader != null && (line = streamReader.ReadLine()) != null)
-        {
-          if (!String.IsNullOrEmpty(line))
+          using (var streamReader = OpenStreamReader())
           {
-            lines.Add(line);
+            long currentLength = streamReader.BaseStream.Length;
 
-            if (lines.Count >= LineBlockSize)
+            if (DetectAndHandleRecreation(streamReader, currentLength))
             {
-              InvokeBlockNewLinesEvent(lines, streamReader);
-              lines.Clear();
+              // После пересоздания читаем с начала
+              currentLength = streamReader.BaseStream.Length;
             }
+
+            ReadNewLines(streamReader, currentLength);
           }
         }
-
-        if (lines.Count > 0)
-          InvokeBlockNewLinesEvent(lines, streamReader);
-        this.position = streamReader.BaseStream.Position;
-
+        catch (FileNotFoundException)
+        {
+          ResetState();
+        }
+        catch (IOException)
+        {
+          // Транзитные ошибки доступа/шары — пропускаем тик
+        }
+        catch (UnauthorizedAccessException)
+        {
+          // Нет временного доступа — пропускаем тик
+        }
       }
     }
 
     private void OnTimedEvent(Object source, ElapsedEventArgs e)
     {
-      ReadToEndLine();
-      timer.Start();
+      try
+      {
+        ReadToEndLine();
+      }
+      finally
+      {
+        if (IsWatching && timer != null)
+          timer.Start();
+      }
     }
 
     /// <summary>
@@ -135,6 +139,97 @@ namespace LogReader
         timer.Dispose();
         timer = null;
       }
+      IsWatching = false;
+    }
+
+    /// <summary>
+    /// Проверяет наличие файла. Если файл отсутствует, сбрасывает состояние
+    /// (позицию и длину) и сообщает, что чтение следует прервать.
+    /// </summary>
+    /// <returns>true, если файл отсутствует и дальнейшее чтение не требуется; иначе false.</returns>
+    private bool StopIfFileMissing()
+    {
+      if (!File.Exists(this.filePath))
+      {
+        ResetState();
+        return true;
+      }
+      return false;
+    }
+
+    /// <summary>
+    /// Открывает поток чтения для лог-файла с корректным режимом совместного доступа
+    /// (ReadWrite | Delete), чтобы не блокировать ротацию/замену файла по SMB.
+    /// </summary>
+    /// <returns>Экземпляр StreamReader для чтения файла.</returns>
+    private StreamReader OpenStreamReader()
+    {
+      var fileStream = new FileStream(this.filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+      return new StreamReader(fileStream);
+    }
+
+    /// <summary>
+    /// Определяет пересоздание или обнуление файла (уменьшение длины или позиция за пределами конца)
+    /// и, при необходимости, сбрасывает позицию, обновляет внутреннее состояние и вызывает событие FileReCreated.
+    /// </summary>
+    /// <param name="streamReader">Поток чтения текущего файла.</param>
+    /// <param name="currentLength">Текущая длина файла в байтах.</param>
+    /// <returns>true, если обнаружено пересоздание/обнуление; иначе false.</returns>
+    private bool DetectAndHandleRecreation(StreamReader streamReader, long currentLength)
+    {
+      if (currentLength < fileLength || this.position > currentLength)
+      {
+        streamReader.DiscardBufferedData();
+        streamReader.BaseStream.Seek(0, SeekOrigin.Begin);
+        this.position = 0;
+        fileLength = 0;
+        FileReCreated?.Invoke();
+        return true;
+      }
+      return false;
+    }
+
+    /// <summary>
+    /// Читает новые строки из файла, накапливает их блоками и публикует через событие BlockNewLines.
+    /// Обновляет текущую позицию чтения и показатель прогресса.
+    /// </summary>
+    /// <param name="streamReader">Поток чтения текущего файла.</param>
+    /// <param name="currentLength">Текущая длина файла в байтах.</param>
+    private void ReadNewLines(StreamReader streamReader, long currentLength)
+    {
+      string line;
+      List<string> lines = new List<string>();
+
+      streamReader.BaseStream.Position = this.position;
+      fileLength = currentLength;
+
+      while (streamReader != null && (line = streamReader.ReadLine()) != null)
+      {
+        if (!String.IsNullOrEmpty(line))
+        {
+          lines.Add(line);
+
+          if (lines.Count >= LineBlockSize)
+          {
+            InvokeBlockNewLinesEvent(lines, streamReader);
+            lines.Clear();
+          }
+        }
+      }
+
+      if (lines.Count > 0)
+        InvokeBlockNewLinesEvent(lines, streamReader);
+
+      this.position = streamReader.BaseStream.Position;
+    }
+
+    /// <summary>
+    /// Сбрасывает внутренние счётчики состояния чтения (позиция и длина файла).
+    /// </summary>
+    private void ResetState()
+    {
+      fileLength = 0;
+      this.position = 0;
     }
 
   }
