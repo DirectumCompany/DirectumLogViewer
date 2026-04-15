@@ -310,7 +310,7 @@
           </StackPanel>
         </TabItem.Header>
         <TabItem.Content>
-          <DataGrid x:Name="BookmarksGrid" AutoGenerateColumns="False" HorizontalGridLinesBrush="#FFC7C7C7" GridLinesVisibility="Horizontal" Margin="0,0,0,0" SelectionMode="Extended" RowHeight="20" CanUserAddRows="false" SelectionChanged="SearchGrid_SelectionChanged" >
+          <DataGrid x:Name="BookmarksGrid" AutoGenerateColumns="False" HorizontalGridLinesBrush="#FFC7C7C7" GridLinesVisibility="Horizontal" Margin="0,0,0,0" SelectionMode="Extended" RowHeight="20" CanUserAddRows="false" SelectionChanged="SearchGrid_SelectionChanged" PreviewMouseLeftButtonDown="BookmarksGrid_PreviewMouseLeftButtonDown" >
             <DataGrid.CommandBindings>
               <CommandBinding Command="{StaticResource ClearAllBookmarks}" Executed="ClearAllBookmarks" />
             </DataGrid.CommandBindings>

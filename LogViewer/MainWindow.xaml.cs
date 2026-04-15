@@ -663,6 +663,16 @@ namespace LogViewer
         LogsGrid.ScrollIntoView(line);
       }
     }
+
+    private void BookmarksGrid_PreviewMouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    {
+      var row = ItemsControl.ContainerFromElement((DataGrid)sender, e.OriginalSource as DependencyObject) as DataGridRow;
+      if (row?.DataContext is LogLine line)
+      {
+        LogsGrid.SelectedItem = line;
+        LogsGrid.ScrollIntoView(line);
+      }
+    }
     private void FilterTenant_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
       var tenant = (sender as ComboBox).SelectedItem as string;
