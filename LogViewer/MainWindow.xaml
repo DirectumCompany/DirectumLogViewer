@@ -45,7 +45,8 @@
         <RoutedUICommand x:Key="CopyJsonCommand" Text="Copy as Json"  />
         <RoutedUICommand x:Key="PasteJsonCommand" Text="Paste Json-log"  />
         <RoutedUICommand x:Key="SaveAsJsonCommand" Text="Save Json-log"  />
-
+        <RoutedUICommand x:Key="AddToBookmarks" Text="Add to bookmarks"  />
+        <RoutedUICommand x:Key="ClearAllBookmarks" Text="Clear all bookmarks"  />
 
         <Image x:Key="VisibilityImage" Source ="/Resources/visibility.png" Width="21" Height="21" />
         <Image x:Key="VisibilityOffImage" Source ="/Resources/visibilityOff.png" Width="21" Height="21" />
@@ -196,13 +197,15 @@
                 <CommandBinding Command="Copy" Executed="CopyCommand" />
                 <CommandBinding Command="{StaticResource CopyJsonCommand}" Executed="CopyJsonCommand" />
                 <CommandBinding Command="{StaticResource SaveAsJsonCommand}" Executed="SaveAsJsonCommand" />
-            </DataGrid.CommandBindings>
+                <CommandBinding Command="{StaticResource AddToBookmarks}" Executed="AddToBookmarks" />
+             </DataGrid.CommandBindings>
 
             <DataGrid.ContextMenu>
                 <ContextMenu>
                     <MenuItem Header="Copy" Command="Copy" />
                     <MenuItem Header="Copy as Json" InputGestureText="Ctrl+Shift+C" Command="{StaticResource CopyJsonCommand}" />
                     <MenuItem Header="Save as Json-log" InputGestureText="Ctrl+Shift+S" Command="{StaticResource SaveAsJsonCommand}" />
+                    <MenuItem Header="Add to bookmarks" InputGestureText="Ctrl+B" Command="{StaticResource AddToBookmarks}" />
                 </ContextMenu>
             </DataGrid.ContextMenu>
 
@@ -210,6 +213,7 @@
                 <KeyBinding Key="C" Modifiers="Control" Command="Copy" />
                 <KeyBinding Key="C" Modifiers="Control+Shift" Command="{StaticResource CopyJsonCommand}" />
                 <KeyBinding Key="S" Modifiers="Ctrl+Shift" Command="{StaticResource SaveAsJsonCommand}" />
+                <KeyBinding Key="B" Modifiers="Ctrl" Command="{StaticResource AddToBookmarks}"/>
             </DataGrid.InputBindings>
 
 
@@ -299,7 +303,66 @@
                     </DataGrid>
                 </TabItem.Content>
             </TabItem>
-        </TabControl>
+            <TabItem x:Name="BookmarksTab">
+        <TabItem.Header>
+          <StackPanel Orientation="Horizontal">
+            <TextBlock Margin="0">Bookmarks</TextBlock>
+          </StackPanel>
+        </TabItem.Header>
+        <TabItem.Content>
+          <DataGrid x:Name="BookmarksGrid" AutoGenerateColumns="False" HorizontalGridLinesBrush="#FFC7C7C7" GridLinesVisibility="Horizontal" Margin="0,0,0,0" SelectionMode="Extended" RowHeight="20" CanUserAddRows="false" SelectionChanged="SearchGrid_SelectionChanged" >
+            <DataGrid.CommandBindings>
+              <CommandBinding Command="{StaticResource ClearAllBookmarks}" Executed="ClearAllBookmarks" />
+            </DataGrid.CommandBindings>
+            <DataGrid.ContextMenu>
+              <ContextMenu>
+                <MenuItem Header="Clear all" InputGestureText="Ctrl+Del" Command="{StaticResource ClearAllBookmarks}" />
+              </ContextMenu>
+            </DataGrid.ContextMenu>
+            <DataGrid.InputBindings>
+              <KeyBinding Key="Del" Modifiers="Ctrl" Command="{StaticResource ClearAllBookmarks}"/>
+            </DataGrid.InputBindings>
+            <DataGrid.CellStyle>
+              <Style TargetType="{x:Type DataGridCell}">
+                <Style.Triggers>
+                  <DataTrigger Binding="{Binding Level}" Value="Error">
+                    <Setter Property="Foreground" Value="Red" />
+                  </DataTrigger>
+
+                  <DataTrigger Binding="{Binding Level}" Value="Debug">
+                    <Setter Property="Foreground" Value="Blue" />
+                  </DataTrigger>
+
+                  <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="BorderThickness" Value="0"/>
+                  </Trigger>
+
+                  <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Foreground" Value="White"/>
+                  </Trigger>
+                </Style.Triggers>
+              </Style>
+            </DataGrid.CellStyle>
+
+            <DataGrid.Columns>
+              <DataGridTextColumn Header="Time" Binding="{Binding Path=Time, StringFormat='yyyy-MM-dd HH:mm:ss.fff'}" Width="145" IsReadOnly="True" CanUserSort="False"/>
+              <DataGridTextColumn Header="Level" Binding="{Binding Path=Level}" Width="50" IsReadOnly="True" CanUserSort="False"/>
+              <DataGridTextColumn Header="Logger" Binding="{Binding Path=Logger}" Width="110" IsReadOnly="True" CanUserSort="False"/>
+              <DataGridTextColumn Header="Message" Binding="{Binding Path=Message}" Width="*" IsReadOnly="True" CanUserSort="False"/>
+            </DataGrid.Columns>
+
+            <DataGrid.Resources>
+              <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}" 
+       Color="#007acc"/>
+
+              <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightBrushKey}" 
+       Color="#FFC9CBCD"/>
+            </DataGrid.Resources>
+
+          </DataGrid>
+        </TabItem.Content>
+      </TabItem>
+    </TabControl>
 
 
 

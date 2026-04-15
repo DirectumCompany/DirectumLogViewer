@@ -49,6 +49,7 @@ namespace LogViewer
     private readonly ObservableCollection<LogLine> logLines = new ObservableCollection<LogLine>();
 
     private ObservableCollection<LogLine> filteredLogLines;
+    private ObservableCollection<LogLine> Bookmarks { get; } = new();
 
     private readonly Uri notifyLogo;
 
@@ -281,6 +282,7 @@ namespace LogViewer
       this.Title = WindowTitle;
       LogsGrid.ItemsSource = null;
       SearchGrid.ItemsSource = null;
+      BookmarksGrid.ItemsSource = null;
       filteredLogLines = null;
       GC.Collect();
     }
@@ -998,6 +1000,26 @@ namespace LogViewer
       File.WriteAllText(tmpFile, clipboardText);
       SelectFileToOpen(tmpFile);
     }
+    #endregion
+
+    #region Bookmarks
+
+    private void AddToBookmarks(object sender, ExecutedRoutedEventArgs e)
+    {
+      var selectedLines = LogsGrid.SelectedItems.OfType<LogLine>();
+
+      foreach (var item in selectedLines)
+        if (!Bookmarks.Contains(item))
+          Bookmarks.Add(item);
+
+      BookmarksGrid.ItemsSource = Bookmarks;
+    }
+
+    private void ClearAllBookmarks(object sender, ExecutedRoutedEventArgs e)
+    {
+      Bookmarks.Clear();
+    }
+
     #endregion
   }
 }
