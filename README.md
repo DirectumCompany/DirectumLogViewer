@@ -17,7 +17,7 @@
 > Внимание! Изменения будут вноситься только в новые версии.
 
 # Установка и настройка
-1.	[Скачать](https://github.com/DirectumCompany/DirectumLogViewer/releases/download/1.0.7/LogViewer.zip)
+1.	[Скачать](https://github.com/DirectumCompany/DirectumLogViewer/releases/download/1.0.8/LogViewer.zip)
 2.	При первом запуске выбрать корневую папку с лог файлами.
 3.	Заполнить список лог-файлов для захвата.
 
