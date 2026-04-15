@@ -938,8 +938,7 @@ namespace LogViewer
 
         try
         {
-          FileInfo log = new FileInfo(fileName);
-          using (var streamReader = new StreamReader(log.Open(FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+          using (var streamReader = new StreamReader(new FileStream(fileName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete, 4096, FileOptions.SequentialScan)))
           {
             long index = 0;
             string line;

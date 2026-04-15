@@ -71,7 +71,7 @@ namespace LogReader
     {
       lock (readLock)
       {
-        using var fileStream = new FileStream(this.filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+        using var fileStream = new FileStream(this.filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete, 4096, FileOptions.SequentialScan);
         using var streamReader = new StreamReader(fileStream);
         long current_length = streamReader.BaseStream.Length;
         if (current_length < fileLength)
